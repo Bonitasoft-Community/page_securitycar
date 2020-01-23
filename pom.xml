@@ -1,0 +1,250 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<properties>
+		<!-- <ping.version>2.4.0</ping.version> -->
+		<bonita.version>7.9.0</bonita.version>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+	</properties>
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.bonitasoft.custompage</groupId>
+	<artifactId>CustomPageSecurityCar</artifactId>
+	<version>2.4.0</version>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.bonitasoft.engine</groupId>
+			<artifactId>bonita-server</artifactId>
+			<version>${bonita.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<!--  mvn install:install-file -Dfile=console-common-7.9.0.jar -DgroupId=org.bonitasoft.console -DartifactId=console-common -Dversion=7.9.0 -Dpackaging=jar -->
+	<dependency>
+		<groupId>org.bonitasoft.console</groupId>
+		<artifactId>console-common</artifactId>
+			<version>${bonita.version}</version>
+	</dependency>
+		<dependency>
+			<groupId>org.bonitasoft.log.event</groupId>
+			<artifactId>bonita-event</artifactId>
+			<version>1.5.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bonitasoft.properties</groupId>
+			<artifactId>bonita-properties</artifactId>
+			<version>2.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+			<version>2.5</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+    <groupId>org.apache.commons</groupId>
+    <artifactId>commons-lang3</artifactId>
+    <version>3.4</version>
+			<scope>provided</scope>
+			</dependency>
+		<!-- <dependency> <groupId>org.bonitasoft.search</groupId> <artifactId>BonitaSearchRelation</artifactId> <version>1.0.0</version> </dependency> -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<version>5.3.1</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- to execute the Deploy Plugin -->
+		<dependency>
+			<groupId>org.bonitasoft.store</groupId>
+			<artifactId>bonita-store</artifactId>
+			<version>1.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bonitasoft.engine</groupId>
+			<artifactId>bonita-client</artifactId>
+			<version>${bonita.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+	</dependencies>
+
+	<!-- ******************** Community Maven repository **************** -->
+	<repositories>
+		<repository>
+			<releases>
+				<enabled>true</enabled>
+				<checksumPolicy>warn</checksumPolicy>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<id>logPageBonita</id>
+			<name>logPageBonita</name>
+			<url>https://raw.githubusercontent.com/Bonitasoft-Community/bonitamavenrepository/master</url>
+			<layout>default</layout>
+		</repository>
+	</repositories>
+	<build>
+		<plugins>
+			<!-- ******************** Generate the Security Jar File **************** -->
+
+			<plugin>
+				<artifactId>maven-jar-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>SecurityCarServer</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<phase>package</phase>
+						<configuration>
+							<finalName>SecurityCarServer</finalName>
+							<encoding>ISO-8859-1</encoding>
+							<classifier>1.0.0</classifier>
+							<includes>
+								<include>**/*.*</include>
+							</includes>
+							<excludes>
+								<exclude>**/SecurityCarAPI*.*</exclude>
+								<exclude>**/GraphGenerator*.*</exclude>
+
+
+							</excludes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>SecurityCarAPI</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<phase>package</phase>
+						<configuration>
+							<finalName>SecurityCarAPI</finalName>
+							<encoding>ISO-8859-1</encoding>
+							<classifier>1.0.0</classifier>
+							<includes>
+								<include>**/SecurityCarAPI*.*</include>
+								<include>**/GraphGenerator*.*</include>
+
+							</includes>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+
+
+
+			<!-- ******************** Copy JAR files under lib **************** -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>3.1.1</version>
+				<executions>
+					<execution>
+						<id>copy-dependencies</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${basedir}/lib</outputDirectory>
+							<overWriteReleases>true</overWriteReleases>
+							<overWriteSnapshots>true</overWriteSnapshots>
+							<excludeTransitive>true</excludeTransitive>
+							<excludeScope>provided</excludeScope>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>copy-Jar</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${basedir}/lib</outputDirectory>
+							<artifactItems>
+								<artifactItem>
+									<groupId>${project.groupId}</groupId>
+									<artifactId>${project.artifactId}</artifactId>
+									<version>${project.version}</version>
+									<overWrite>true</overWrite>
+								</artifactItem>
+							</artifactItems>
+							<resources>
+								<resource>
+									<directory>target</directory>
+									<includes>
+										<include>*.jar</include>
+									</includes>
+								</resource>
+							</resources>
+
+						</configuration>
+					</execution>
+
+				</executions>
+			</plugin>
+
+			<!-- ******************** Generate the Resource (ZIP FILE) -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>3.1.1</version>
+				<executions>
+
+					<execution>
+						<id>build-bonitaresource</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+						<inherited>false</inherited>
+						<configuration>
+							<finalName>${project.artifactId}-${project.version}</finalName>
+							<ignoreDirFormatExtensions>true</ignoreDirFormatExtensions>
+							<appendAssemblyId>false</appendAssemblyId>
+							<descriptors>
+								<descriptor>src/assembly/buildzip.xml</descriptor>
+							</descriptors>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- *************** deploy the resource localy -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>1.1.1</version>
+
+				<executions>
+					<execution>
+						<id>Deploy Page to Bonita Server</id>
+
+						<phase>install</phase>
+						<goals>
+							<goal>java</goal>
+						</goals>
+						<configuration>
+							<mainClass>org.bonitasoft.store.BonitaStoreAccessorClient</mainClass>
+							<arguments>
+								<argument>http://localhost:8080</argument>
+								<argument>bonita</argument>
+								<argument>Walter.Bates</argument>
+								<argument>bpm</argument>
+								<argument>target/${project.artifactId}-${project.version}.zip</argument>
+								<!-- use UPDATE or DELETEANDADD -->
+								<argument>strategy:UPDATE</argument>
+								<argument>profile:BOTools</argument>
+
+							</arguments>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+		</plugins>
+	</build>
+</project>

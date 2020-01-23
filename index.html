@@ -1,0 +1,288 @@
+<!doctype html>
+<!--[if lt IE 7]>
+<html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>
+<html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>
+<html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js"> <!--<![endif]-->
+<head>
+    <meta charset="utf-8">
+    <title>Security Car</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" href="pageResource?page=custompage_securitycar&location=style/animate.css" />
+    <link rel="stylesheet" href="pageResource?page=custompage_securitycar&location=style/bootstrap.min.css">
+	<link rel="stylesheet" href="pageResource?page=custompage_securitycar&location=style/main.css">
+	<link rel="stylesheet" href="pageResource?page=custompage_securitycar&location=style/style.css">
+
+	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+	<script type="text/javascript" src="https://www.google.com/uds/?file=visualization&amp;v=1&amp;hl=fr&amp;packages=corechart&amp;async=2"></script>
+	<link type="text/css" href="https://www.google.com/uds/api/visualization/1.0/ff67c3772da186a412ae3231c32409e9/ui+fr.css" rel="stylesheet">
+	<script type="text/javascript" src="https://www.google.com/uds/api/visualization/1.0/ff67c3772da186a412ae3231c32409e9/format+fr,default+fr,ui+fr,corechart+fr.I.js"></script>
+	<link href="https://ajax.googleapis.com/ajax/static/modules/gviz/1.0/core/tooltip.css" rel="stylesheet" type="text/css">
+
+
+</head>
+<body ng-app="securitycarmonitor">
+
+
+
+
+<div class="bs-component"  ng-controller="SecurityCarControler as securitycarctrl">
+
+	
+		<center>
+		<table>
+			<tr>
+				<td><h1>Security Car</h1><a href="" ng-click="securitycarctrl.showhistory( ! securitycarctrl.isshowhistory )">V1.0</a></td>
+				<td rowspan="2"><img src="pageResource?page=custompage_securitycar&location=img/securitycar.jpg" width="150" heigth="150" /></td>
+			</tr>
+			<tr><td>
+				<div id="showHistory" ng-show="securitycarctrl.isshowhistory" style="border-width:2px;border-style:ridge;border-color:blue">
+				1.0 First version<br>				
+				</td>
+			</tr>
+			</div>
+		</table>
+		</center>
+	
+	
+		<center>
+			<button class="btn btn-info" ng-click="securitycarctrl.refresh()" ng-disabled="securitycarctrl.loading">Refresh</button>
+ 			</center>
+ 		
+	<!--   -------------------------------------------------------------------------- -->
+	<!--                                                                              -->
+	<!--  User Theft                                                                -->
+	<!--                                                                              -->
+	<!-- --------------------------------------------------------------------------   -->
+	
+	<div class="col-lg-12">
+		<legend class="text-primary"><span class="glyphicon glyphicon-th"></span>Anti Theft</legend>
+		<div class="panel panel-primary">
+			<div class="explanation">
+			Theses users are block after 6 invalid pass
+			</div>
+ 			<button ng-click="securitycarctrl.refresh()" ng-disabled="securitycarctrl.loading" class="btn btn-info btn-xs"><span class="glyphicon glyphicon-refresh"></span></button>
+			
+			<span class="Loading" ng-show="securitycarctrl.loading"></span>
+			<div ng-bind-html="securitycarctrl.getListEvents(securitycarctrl.listevents )"></div>
+
+			<table>
+			<tr><td  style="vertical-align:top">
+				<table class="table table-striped table-hover table-condensed">
+					<tr>
+						<th>User name</th>
+						<th>Last access</th>
+						<th>Nb tentative</th>
+						<th>Operation</th>
+					</tr>
+					<tr ng-repeat="userinfo in securitycarctrl.users.theft.list track by $index">
+						<td>{{userinfo.username}}</td>
+						<td>{{userinfo.lastaccessdate}}</td>
+						<td>{{userinfo.nbtentative}}
+							<button class="btn btn-success btn-xs" ng-click="securitycarctrl.resetTentative(userinfo)">Set to 0</button>
+							<div ng-bind-html="securitycarctrl.getListEvents( userinfo.listeventsreset )"></div>
+							
+						</td>
+						<td>
+							<table>
+								<tr><td>
+									<button class="btn btn-info btn-xs" ng-click="securitycarctrl.resetPassword(userinfo)">Generate new password</button>
+									<button class="btn btn-danger btn-xs" ng-click="securitycarctrl.activatedeactivate( userinfo, false )" ng-show="userinfo.isenabled">Deactivate</button>
+								</td></tr>
+								<tr><td>
+									<div ng-bind-html="securitycarctrl.getListEvents( userinfo.listevents )"></div>
+	
+								</td></tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+			</td><td style="vertical-align:top">
+			<div class="panel panel-danger">
+				<div class="panel-heading">Attack</div>
+				<div class="panel-body">
+				<table class="table table-striped table-hover table-condensed">
+					<tr>
+						<th>Date</th>
+						<th>Ip</th>
+						<th>User attacked</th>
+						<th>Nb attack</th>
+					</tr>
+					<tr ng-repeat="theftlog in securitycarctrl.theft.theftLog track by $index">
+						<td>{{theftlog.t | date:'MM/dd/yyyy HH:mm:ss'}}</td>
+						<td>{{theftlog.ip}}</td>
+						<td>{{theftlog.u}}</td>
+						<td>{{theftlog.n}}</td>
+					</tr>
+				</table>
+				</div>
+				</div>
+			</td></tr>
+			<tr>
+				<td>
+					<div google-chart chart="theftTimeLine" style="height: 200px; width: 100%; position: relative; "></div>
+				
+				</td>
+			</tr>
+			</table>			
+		</div>
+	</div>		
+			
+
+	<!--   -------------------------------------------------------------------------- -->
+	<!--                                                                              -->
+	<!--  Users connected                                                                -->
+	<!--                                                                              -->
+	<!-- --------------------------------------------------------------------------   -->
+			
+	<div class="col-lg-12">
+		<legend class="text-primary"><span class="glyphicon glyphicon-th"></span>Users connected</legend>
+		<div class="panel panel-primary">
+			<div class="explanation">
+			All users connected from <input type="text" ng-model="securitycarctrl.params.connectedStartIndex">
+			 number of lines<input type="text" ng-model="securitycarctrl.params.connectedMaxResults">
+			 <button ng-click="securitycarctrl.refresh()" ng-disabled="securitycarctrl.loading" class="btn btn-info btn-xs"><span class="glyphicon glyphicon-refresh"></span></button>
+			 
+			</div>
+
+			<span class="Loading" ng-show="securitycarctrl.loading"></span>
+			<div ng-bind-html="securitycarctrl.getListEvents(securitycarctrl.users.connected.listevents )"></div>
+
+			<table class="table table-striped table-hover table-condensed">
+				<tr>
+					<th>User name</th>
+					<th>Connected</th>
+				</tr>
+				<tr ng-repeat="userinfo in securitycarctrl.users.connected.list track by $index">
+					<td>{{userinfo.username}}</td>
+					<td>{{userinfo.lastconnection}}</td>
+					<td>
+						<button class="btn btn-danger btn-xs" ng-click="securitycarctrl.activatedeactivate(userinfo, false)" ng-show="userinfo.isenabled">Deactivate</button>
+						<button class="btn btn-warning btn-xs" ng-click="securitycarctrl.disconnect(userinfo)">Disconnect</button>
+					</td>
+				</tr>
+			</table>	
+			</div>
+	</div>	
+			
+			
+	<!--   -------------------------------------------------------------------------- -->
+	<!--                                                                              -->
+	<!--  User operations                                                                -->
+	<!--                                                                              -->
+	<!-- --------------------------------------------------------------------------   -->
+			
+	<div class="col-lg-12">
+		<legend class="text-primary"><span class="glyphicon glyphicon-th"></span>Users operation</legend>
+		<div class="panel panel-primary">
+			<div class="explanation">
+			Search users and information on users
+			Filter on user : <input type="text" ng-model="securitycarctrl.params.useroperationFilteruser">
+			from <input type="text" ng-model="securitycarctrl.params.useroperationStartIndex">
+			 number of lines <input type="text" ng-model="securitycarctrl.params.useroperationMaxResults">
+					
+			</div>
+			
+			<span class="Loading" ng-show="securitycarctrl.loading"></span>
+			<div ng-bind-html="securitycarctrl.getListEvents(securitycarctrl.listevents )"></div>
+
+			<button class="btn btn-primary btn-xs" ng-click="securitycarctrl.searchUser()" ng-disabled="securitycarctrl.loading">Search</button>
+						
+			<table class="table table-striped table-hover table-condensed">
+				<tr>
+					<th>User name</th>
+					<th>First name</th>
+					<th>Last name</th>					
+					<th>Last connection</th>
+					<th>Nb tentatives</th>
+					<th>Status</th>
+					<th></th>
+				</tr>
+				<tr ng-repeat="userinfo in securitycarctrl.users.operations.list track by $index">
+					<td>{{userinfo.username}}</td>
+					<td>{{userinfo.firstname}}</td>
+					<td>{{userinfo.lastname}}</td>
+					<td>{{userinfo.lastconnection}}</td>
+					<td>{{userinfo.nbtentatives}}
+						<button class="btn btn-success btn-xs" ng-click="securitycarctrl.resetTentative(userinfo)">Set to 0</button>
+						<div ng-bind-html="securitycarctrl.getListEvents( userinfo.listeventsreset )"></div>
+					
+					</td>
+					<td>					
+						<label ng-show="userinfo.status =='THEFT'" class="btn btn-danger btn-xs" style="width:100%">Theft</label>
+						<label ng-show=" ! userinfo.isenabled" style="width:100%">Disable</label>
+						<label ng-show="userinfo.isenabled" style="width:100%">Actif</label>
+					</td>
+					<td>
+					<table>
+						<tr><td>
+							<button class="btn btn-info btn-xs" ng-click="securitycarctrl.resetPassword(userinfo)">Generate new password</button>
+							<button class="btn btn-danger btn-xs" ng-show="userinfo.isenabled"  ng-click="securitycarctrl.activatedeactivate(userinfo, false)">Deactivate</button>
+							<button class="btn btn-success btn-xs" ng-show="! userinfo.isenabled" ng-click="securitycarctrl.activatedeactivate(userinfo, true)">Activate</button>
+						</td></tr>
+						<tr><td>
+							{{userinfo.passwordGenerated}}
+							<div ng-bind-html="securitycarctrl.getListEvents( userinfo.listevents )"></div>
+						</td></tr>
+					</table>
+					</td>
+				</tr>
+			</table>
+		</div>
+	</div>					
+
+		
+	<!--   -------------------------------------------------------------------------- -->
+	<!--                                                                              -->
+	<!--  Parameters                                                                -->
+	<!--                                                                              -->
+	<!-- --------------------------------------------------------------------------   -->
+			
+	<div class="col-lg-12">
+		<legend class="text-primary"><span class="glyphicon glyphicon-th"></span>Parameters</legend>
+		<div class="panel panel-primary">
+			<div class="explanation">
+			Fix parameters
+			</div>
+
+			<span class="Loading" ng-show="securitycarctrl.loading"></span>
+			<div ng-bind-html="securitycarctrl.getListEvents(securitycarctrl.custompage.listevents )"></div>
+
+			Password has to be change every : <input type="text" ng-model="securitycarctrl.parameter.nbdayspasswordactif"> days
+			Number of tentative before block: <input type="text" ng-model="securitycarctrl.parameter.nbtentatives">
+			<button class="btn btn-primary btn-xs" ng-click="securitycarctrl.saveParameters()">Update</button><p>
+			
+			<div ng-bind-html="securitycarctrl.getListEvents(securitycarctrl.parameter.listevents )"></div>
+
+		</div>
+	</div>		
+			
+</div> <!--  end div controler -->
+
+
+
+<!-- Third party dependencies -->
+
+<script src="pageResource?page=custompage_securitycar&location=3rd-party/jquery.min.js"></script>
+
+<script src="pageResource?page=custompage_securitycar&location=3rd-party/angular.min.js"></script>
+
+<script src="pageResource?page=custompage_securitycar&location=3rd-party/angular-resource.min.js"></script>
+<script src="pageResource?page=custompage_securitycar&location=3rd-party/angular-cookies.min.js"></script>
+
+<script src="pageResource?page=custompage_securitycar&location=3rd-party/bootstrap/js/bootstrap.min.js"></script>
+<script src="pageResource?page=custompage_securitycar&location=3rd-party/angular-bootstrap-tpls.min.js"></script>
+<script src="pageResource?page=custompage_securitycar&location=3rd-party/angular-file-upload.js"></script>
+<script src="pageResource?page=custompage_securitycar&location=3rd-party/ng-google-chart.js"></script>
+<script src="pageResource?page=custompage_securitycar&location=3rd-party/angular-sanitize.min.js"></script> 
+
+
+<!-- Application dependencies -->
+<script src="pageResource?page=custompage_securitycar&location=securitycarmonitor.js"></script>
+
+</body>
+</html>
