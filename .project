@@ -6,6 +6,11 @@
 	</projects>
 	<buildSpec>
 		<buildCommand>
+			<name>org.eclipse.wst.common.project.facet.core.builder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+		<buildCommand>
 			<name>org.eclipse.jdt.core.javabuilder</name>
 			<arguments>
 			</arguments>
@@ -15,31 +20,15 @@
 			<arguments>
 			</arguments>
 		</buildCommand>
+		<buildCommand>
+			<name>org.eclipse.wst.validation.validationbuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
 	</buildSpec>
 	<natures>
 		<nature>org.eclipse.m2e.core.maven2Nature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
+		<nature>org.eclipse.wst.common.project.facet.core.nature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>custompage/7.2.4/Actions.groovy</name>
-			<type>1</type>
-			<locationURI>PARENT-5-PROJECT_LOC/bonita/BPM-SP-7.2.4-c/workspace/CustomPage/bonita_home/client/tenants/1/work/pages/custompage_securitycar/Actions.groovy</locationURI>
-		</link>
-		<link>
-			<name>custompage/7.2.4/Index.groovy</name>
-			<type>1</type>
-			<locationURI>PARENT-5-PROJECT_LOC/bonita/BPM-SP-7.2.4-c/workspace/CustomPage/bonita_home/client/tenants/1/work/pages/custompage_securitycar/Index.groovy</locationURI>
-		</link>
-		<link>
-			<name>custompage/7.2.4/index.html</name>
-			<type>1</type>
-			<locationURI>PARENT-5-PROJECT_LOC/bonita/BPM-SP-7.2.4-c/workspace/CustomPage/bonita_home/client/tenants/1/work/pages/custompage_securitycar/index.html</locationURI>
-		</link>
-		<link>
-			<name>custompage/7.2.4/securitycarmonitor.js</name>
-			<type>1</type>
-			<locationURI>PARENT-5-PROJECT_LOC/bonita/BPM-SP-7.2.4-c/workspace/CustomPage/bonita_home/client/tenants/1/work/pages/custompage_securitycar/resources/securitycarmonitor.js</locationURI>
-		</link>
-	</linkedResources>
 </projectDescription>

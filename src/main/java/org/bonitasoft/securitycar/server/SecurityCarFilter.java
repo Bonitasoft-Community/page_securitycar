@@ -1,4 +1,4 @@
-package org.bonitasoft.securitycar.filter;
+package org.bonitasoft.securitycar.server;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -19,11 +19,12 @@ import org.bonitasoft.engine.api.ApiAccessType;
 import org.bonitasoft.engine.api.IdentityAPI;
 import org.bonitasoft.engine.api.LoginAPI;
 import org.bonitasoft.engine.api.TenantAPIAccessor;
+import org.bonitasoft.engine.connector.ConnectorAPIAccessorImpl;
 import org.bonitasoft.engine.identity.User;
 import org.bonitasoft.engine.session.APISession;
 import org.bonitasoft.engine.util.APITypeManager;
 import org.bonitasoft.log.event.BEvent;
-import org.bonitasoft.securitycar.TowerControl;
+import org.bonitasoft.securitycar.engine.TowerControl;
 
 /**
  * <!-- security car --> <filter> <filter-name>SecurityCarFilter</filter-name>
@@ -38,9 +39,9 @@ import org.bonitasoft.securitycar.TowerControl;
  *
  * 
  */
-public class SecurityCarFilterConnect implements Filter {
+public class SecurityCarFilter implements Filter {
 
-	public Logger logger = Logger.getLogger(SecurityCarFilterConnect.class.getName());
+	public Logger logger = Logger.getLogger(SecurityCarFilter.class.getName());
 	public String logHeader = "--------------------- filter SecurityCar ";
 
 	public String userNameReport = "";
@@ -60,9 +61,22 @@ public class SecurityCarFilterConnect implements Filter {
 		// final HttpServletResponse httpResponse = (HttpServletResponse) servletResponse;
 		final HttpServletRequest httpRequest = (HttpServletRequest) request;
 
+		Butler butler = Butler.getInstance();
+		
+		if ( ! butler.watchDog(this, httpRequest))
+		    return;
+		
 		logger.info(logHeader + "Before URL=[" + httpRequest.getRequestURI() + "]");
+		long timeBefore = System.currentTimeMillis();
 		chain.doFilter(httpRequest, servletResponse);
+	    long timeAfter = System.currentTimeMillis();
 
+	    butler.registerOneHttpCall(timeAfter - timeBefore, httpRequest);
+	    
+		// is this is a login URL ? 
+		if (! httpRequest.getRequestURI().startsWith("/bonita/loginservice"))
+		    return;
+		
 		logger.info(logHeader + "After URL=[" + httpRequest.getRequestURI() + "]");
 		int tenantId;
 		try
@@ -73,7 +87,6 @@ public class SecurityCarFilterConnect implements Filter {
 		{
 			tenantId=1;
 		}
-		TowerControl towerControl = TowerControl.getInstance();
 		
 		
 		final HttpServletRequestAccessor requestAccessor = new HttpServletRequestAccessor(httpRequest);
@@ -85,7 +98,7 @@ public class SecurityCarFilterConnect implements Filter {
 					final IdentityAPI identityAPI = TenantAPIAccessor.getIdentityAPI(apiSession);
 
 					User user = identityAPI.getUser(apiSession.getUserId());
-					towerControl.addOneTentative(tenantId, user.getUserName(), request.getRemoteAddr(), true, identityAPI);
+					butler.addOneTentative(tenantId, user.getUserName(), httpRequest, true, identityAPI);
 				} catch (Exception e) {
 					logger.severe(logHeader + "user from id[" + apiSession.getUserId() + "] not found");
 				}
@@ -101,24 +114,24 @@ public class SecurityCarFilterConnect implements Filter {
 		// So, we need to connect to check the userId. Use the technical user
 		// given in parameters to check that
 
-		final Map<String, String> map = new HashMap<String, String>();
+		final Map<String, String> map = new HashMap<>();
 		APITypeManager.setAPITypeAndParams(ApiAccessType.LOCAL, map);
 
 		try {
-			final LoginAPI loginAPI = TenantAPIAccessor.getLoginAPI();
+            ConnectorAPIAccessorImpl apiAccessor = new ConnectorAPIAccessorImpl(tenantId);
+            final IdentityAPI identityAPI = apiAccessor.getIdentityAPI();
+
+			// final LoginAPI loginAPI = TenantAPIAccessor.getLoginAPI();
 
 			// log in to the tenant to create a session
-			final APISession apiSession = loginAPI.login(userNameReport, userPasswortReport);
+			// final APISession apiSession = loginAPI.login(userNameReport, userPasswortReport);
 			// set the session in the TomcatSession
-			final IdentityAPI identityAPI = TenantAPIAccessor.getIdentityAPI(apiSession);
+            // final IdentityAPI identityAPI = TenantAPIAccessor.getIdentityAPI(apiSession);
+			butler.addOneTentative(tenantId, userName, httpRequest, false, identityAPI);
+			
 
-			List<BEvent> listEvents = towerControl.addOneTentative(tenantId, userName, request.getRemoteAddr(), false, identityAPI);
-			for (BEvent event : listEvents) {
-				event.log();
-			}
-			loginAPI.logout(apiSession);
 		} catch (Exception e) {
-			logger.info(logHeader + "Error during reporing[" + e.toString() + "]");
+			logger.info(logHeader + "Error during reporting[" + e.toString() + "]");
 
 		}
 

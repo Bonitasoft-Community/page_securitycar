@@ -11,9 +11,11 @@ import org.json.simple.JSONValue;
 
  
 import org.bonitasoft.engine.identity.User;
-import org.bonitasoft.console.common.server.page.PageContext
-import org.bonitasoft.console.common.server.page.PageController
-import org.bonitasoft.console.common.server.page.PageResourceProvider
+
+import org.bonitasoft.web.extension.page.PageContext;
+import org.bonitasoft.web.extension.page.PageController;
+import org.bonitasoft.web.extension.page.PageResourceProvider;
+
 
 import org.bonitasoft.engine.api.TenantAPIAccessor;
 import org.bonitasoft.engine.session.APISession;
@@ -55,14 +57,23 @@ public class Actions {
 			if ("init".equals(action))
 			{
 				SecurityCarAPI.SecurityParameter securityParameter = SecurityCarAPI.SecurityParameter.getInstanceFromJsonSt(session, paramJsonSt );				
-				actionAnswer.setResponse( securityCarAPI.getStatus( securityParameter, identityApi).toMap());
+				actionAnswer.setResponse( securityCarAPI.init( securityParameter, identityApi).toMap());
             }
-			else if ("refresh".equals(action))
+			else if ("theftstatus".equals(action))
 			{
 				SecurityCarAPI.SecurityParameter securityParameter = SecurityCarAPI.SecurityParameter.getInstanceFromJsonSt(session, paramJsonSt );				
-				actionAnswer.setResponse( securityCarAPI.getStatus( securityParameter, identityApi).toMap());
+				actionAnswer.setResponse( securityCarAPI.getTheftStatus( securityParameter, identityApi).toMap());
             }
-			else if ("usersoperation".equals(action))
+            else if ("userconnected".equals(action))
+            {
+                SecurityCarAPI.SecurityParameter securityParameter = SecurityCarAPI.SecurityParameter.getInstanceFromJsonSt(session, paramJsonSt );             
+                actionAnswer.setResponse( securityCarAPI.getUsersConnected( securityParameter, identityApi).toMap());
+            }
+        	else if ("serveractivitystatus".equals(action))
+            {
+                SecurityCarAPI.SecurityParameter securityParameter = SecurityCarAPI.SecurityParameter.getInstanceFromJsonSt(session, paramJsonSt );             
+                actionAnswer.setResponse( securityCarAPI.getServerActivityStatus( securityParameter, identityApi).toMap());
+            }else if ("usersoperation".equals(action))
 			{
 				SecurityCarAPI.SecurityParameter securityParameter = SecurityCarAPI.SecurityParameter.getInstanceFromJsonSt(session, paramJsonSt );				
 				actionAnswer.setResponse( securityCarAPI.getUsersOperations( securityParameter, identityApi).toMap() );

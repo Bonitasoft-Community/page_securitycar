@@ -30,106 +30,152 @@
 
 
 
-<div class="bs-component"  ng-controller="SecurityCarControler as securitycarctrl">
+<div class="bs-component"  ng-controller="SecurityCarControler as ctrl">
 
 	
-		<center>
-		<table>
-			<tr>
-				<td><h1>Security Car</h1><a href="" ng-click="securitycarctrl.showhistory( ! securitycarctrl.isshowhistory )">V1.0</a></td>
-				<td rowspan="2"><img src="pageResource?page=custompage_securitycar&location=img/securitycar.jpg" width="150" heigth="150" /></td>
-			</tr>
-			<tr><td>
-				<div id="showHistory" ng-show="securitycarctrl.isshowhistory" style="border-width:2px;border-style:ridge;border-color:blue">
-				1.0 First version<br>				
-				</td>
-			</tr>
-			</div>
-		</table>
-		</center>
+	<center>
+	<table>
+		<tr>
+			<td><h1>Security Car</h1>V1.0 (June 30 2020)</td>
+			<td rowspan="2"><img src="img/securitycar.jpg" width="150" heigth="150" /></td>
+			<!--   <td rowspan="2"><img src="pageResource?page=custompage_securitycar&location=img/securitycar.jpg" width="150" heigth="150" /></td>-->
+		</tr>
+		<tr><td>
+			<div id="showHistory" ng-show="ctrl.isshowhistory" style="border-width:2px;border-style:ridge;border-color:blue">
+			1.0 First version<br>				
+			</td>
+		</tr>
+		</div>
+	</table>
+	</center>
 	
-	
-		<center>
-			<button class="btn btn-info" ng-click="securitycarctrl.refresh()" ng-disabled="securitycarctrl.loading">Refresh</button>
- 			</center>
- 		
+	<ul class="nav nav-tabs"  ng-class="{'nav-stacked': vertical, 'nav-justified': justified}" style="border-bottom: 1px solid #c2c2c2;">
+			<li ng-class="{active: active, disabled: false}" id="form-tab" heading="Anti Theft" active="true" title="Anti Theft" select="ctrl.navbaractiv == 'AntiTheft'" class="{{ctrl.getNavClass('AntiTheft')}}" style="{{ctrl.getNavStyle('AntiTheft')}}">
+				  <a ng-click="ctrl.navbaractiv = 'AntiTheft';"   class="ng-binding">Anti Theft</a>
+			</li>
+			<li ng-class="{active: active, disabled: false}" id="form-tab" heading="Users Connected" active="true" title="Users Connected" select="ctrl.navbaractiv == 'UsersConnected'" class="{{ctrl.getNavClass('UsersConnected')}}" style="{{ctrl.getNavStyle('UsersConnected')}}">
+				  <a ng-click="ctrl.navbaractiv = 'UsersConnected';"   class="ng-binding">Users connected</a>
+			</li>
+			<li ng-class="{active: active, disabled: false}" id="form-tab" heading="Users operation" active="true" title="Users Operation" select="ctrl.navbaractiv == 'UsersOperation'" class="{{ctrl.getNavClass('UsersOperation')}}" style="{{ctrl.getNavStyle('UsersOperation')}}">
+				  <a  ng-click="ctrl.navbaractiv='UsersOperation'"  class="ng-binding">Users operation</a>
+			</li>
+			<li ng-class="{active: active, disabled: false}" id="form-tab" heading="Server Activity" active="true" title="Server Activity" select="ctrl.navbaractiv == 'ServerActivity'" class="{{ctrl.getNavClass('ServerActivity')}}" style="{{ctrl.getNavStyle('ServerActivity')}}">
+				  <a  ng-click="ctrl.navbaractiv='ServerActivity'" class="ng-binding">Server Activity</a>
+			</li>
+			<li ng-class="{active: active, disabled: false}" id="form-tab" heading="Parameters" active="true" title="Parameters" select="ctrl.navbaractiv == 'Parameters'" class="{{ctrl.getNavClass('Parameters')}}" style="{{ctrl.getNavStyle('Parameters')}}">
+				  <a  ng-click="ctrl.navbaractiv='Parameters'" class="ng-binding">Parameters</a>
+			</li>
+
+		</ul>
+		
 	<!--   -------------------------------------------------------------------------- -->
 	<!--                                                                              -->
 	<!--  User Theft                                                                -->
 	<!--                                                                              -->
 	<!-- --------------------------------------------------------------------------   -->
 	
-	<div class="col-lg-12">
-		<legend class="text-primary"><span class="glyphicon glyphicon-th"></span>Anti Theft</legend>
-		<div class="panel panel-primary">
-			<div class="explanation">
-			Theses users are block after 6 invalid pass
+	<div class="col-lg-12" ng_if="ctrl.navbaractiv == 'AntiTheft'">
+		<div class="panel panel-danger">
+			<div class="panel-heading ">
+				Users Theft
+				<a ng-click="ctrl.refresh( 'theftstatus' )" class="btn btn-default btn-xs" ng-disabled="ctrl.inprogress"><span class="glyphicon glyphicon-repeat"></span></a>
+				<span ng-if="ctrl.inprogress">
+					<span class="Loading">.</span>Loading...
+				</span>
 			</div>
- 			<button ng-click="securitycarctrl.refresh()" ng-disabled="securitycarctrl.loading" class="btn btn-info btn-xs"><span class="glyphicon glyphicon-refresh"></span></button>
-			
-			<span class="Loading" ng-show="securitycarctrl.loading"></span>
-			<div ng-bind-html="securitycarctrl.getListEvents(securitycarctrl.listevents )"></div>
+			<div class="panel-body">
+		
+				<div class="explanation">
+					Theses users are block after x invalid tentatives to connect
+				</div>
+ 			
+				<div ng-bind-html="ctrl.getListEvents(ctrl.listevents )"></div>
 
-			<table>
-			<tr><td  style="vertical-align:top">
 				<table class="table table-striped table-hover table-condensed">
-					<tr>
-						<th>User name</th>
-						<th>Last access</th>
-						<th>Nb tentative</th>
-						<th>Operation</th>
+						<tr>
+							<th>User name</th>
+							<th>Last access</th>
+							<th>Nb tentatives</th>
+							<th>Operation</th>
 					</tr>
-					<tr ng-repeat="userinfo in securitycarctrl.users.theft.list track by $index">
+					<tr ng-repeat="userinfo in ctrl.users.theft.list track by $index">
 						<td>{{userinfo.username}}</td>
 						<td>{{userinfo.lastaccessdate}}</td>
 						<td>{{userinfo.nbtentative}}
-							<button class="btn btn-success btn-xs" ng-click="securitycarctrl.resetTentative(userinfo)">Set to 0</button>
-							<div ng-bind-html="securitycarctrl.getListEvents( userinfo.listeventsreset )"></div>
+							<button class="btn btn-success btn-xs" ng-click="ctrl.resetTentative(userinfo)">Set to 0</button>
+							<div ng-bind-html="ctrl.getListEvents( userinfo.listeventsreset )"></div>
 							
 						</td>
 						<td>
 							<table>
 								<tr><td>
-									<button class="btn btn-info btn-xs" ng-click="securitycarctrl.resetPassword(userinfo)">Generate new password</button>
-									<button class="btn btn-danger btn-xs" ng-click="securitycarctrl.activatedeactivate( userinfo, false )" ng-show="userinfo.isenabled">Deactivate</button>
+									<button class="btn btn-info btn-xs" ng-click="ctrl.resetPassword(userinfo)">Generate new password</button>
+									<button class="btn btn-danger btn-xs" ng-click="ctrl.activatedeactivate( userinfo, false )" ng-show="userinfo.isenabled">Deactivate</button>
 								</td></tr>
 								<tr><td>
-									<div ng-bind-html="securitycarctrl.getListEvents( userinfo.listevents )"></div>
+									<div ng-bind-html="ctrl.getListEvents( userinfo.listevents )"></div>
 	
 								</td></tr>
 							</table>
 						</td>
 					</tr>
 				</table>
-			</td><td style="vertical-align:top">
-			<div class="panel panel-danger">
-				<div class="panel-heading">Attack</div>
-				<div class="panel-body">
+			</div> <!--  div class body -->
+		</div> <!--  class panel -->
+			
+		
+		<div class="panel panel-danger">
+			<div class="panel-heading">Users Attack
+				<a ng-click="ctrl.refresh( 'theftstatus' )" class="btn btn-default btn-xs" ng-disabled="ctrl.inprogress"><span class="glyphicon glyphicon-repeat"></span></a>
+				<span ng-if="ctrl.inprogress">
+					<span class="Loading">.</span>Loading...
+				</span>
+			</div>
+			<div class="panel-body">
+				<table class="table table-striped table-hover table-condensed">
+						<tr>
+							<th>Date</th>
+							<th>Number of tentatives</th>
+							<th>User attacked</th>
+							<th>Finally correct</th>
+							<th>Client Address</th>
+							<th>Client Host</th>
+						</tr>
+						<tr ng-repeat="theftlog in ctrl.theft.theftTentatives track by $index">
+							<td>{{theftlog.lastTentativeTime | date:'MM/dd/yyyy HH:mm:ss'}}</td>
+							<td>{{theftlog.nbTentatives}}</td>
+							<td>{{theftlog.userName}}</td>
+							<td>{{theftlog.isFinalyCorrect}}</td>
+							<td>{{theftlog.remoteAddr}}</td>
+							<td>{{theftlog.remoteHost}}</td>
+						</tr>
+					</table>
+			</div>
+		</div>
+			
+		<div class="panel panel-info">
+			<div class="panel-heading">History
+				<a ng-click="ctrl.refresh( 'theftstatus' )" class="btn btn-default btn-xs" ng-disabled="ctrl.inprogress"><span class="glyphicon glyphicon-repeat"></span></a>
+				<span ng-if="ctrl.inprogress">
+					<span class="Loading">.</span>Loading...
+				</span>
+			</div>
+			<div class="panel-body">
+			
 				<table class="table table-striped table-hover table-condensed">
 					<tr>
 						<th>Date</th>
-						<th>Ip</th>
-						<th>User attacked</th>
-						<th>Nb attack</th>
+						<th>Number of tentatives</th>
 					</tr>
-					<tr ng-repeat="theftlog in securitycarctrl.theft.theftLog track by $index">
-						<td>{{theftlog.t | date:'MM/dd/yyyy HH:mm:ss'}}</td>
-						<td>{{theftlog.ip}}</td>
-						<td>{{theftlog.u}}</td>
-						<td>{{theftlog.n}}</td>
+					<tr ng-repeat="theftlog in ctrl.theft.theftSlots track by $index">
+						<td>{{theftlog.slottime | date:'MM/dd/yyyy HH:mm:ss'}}</td>
+						<td>{{theftlog.nbHits}}</td>
 					</tr>
 				</table>
-				</div>
-				</div>
-			</td></tr>
-			<tr>
-				<td>
-					<div google-chart chart="theftTimeLine" style="height: 200px; width: 100%; position: relative; "></div>
-				
-				</td>
-			</tr>
-			</table>			
+			</div>
 		</div>
+		
+
 	</div>		
 			
 
@@ -139,35 +185,43 @@
 	<!--                                                                              -->
 	<!-- --------------------------------------------------------------------------   -->
 			
-	<div class="col-lg-12">
-		<legend class="text-primary"><span class="glyphicon glyphicon-th"></span>Users connected</legend>
-		<div class="panel panel-primary">
-			<div class="explanation">
-			All users connected from <input type="text" ng-model="securitycarctrl.params.connectedStartIndex">
-			 number of lines<input type="text" ng-model="securitycarctrl.params.connectedMaxResults">
-			 <button ng-click="securitycarctrl.refresh()" ng-disabled="securitycarctrl.loading" class="btn btn-info btn-xs"><span class="glyphicon glyphicon-refresh"></span></button>
-			 
+	<div class="col-lg-12" ng_if="ctrl.navbaractiv == 'UsersConnected'">
+		<div class="panel panel-default">
+			<div class="panel-heading title ng-binding">
+				Users connected
+				<a ng-click="ctrl.refresh( 'userconnected' )" class="btn btn-default btn-xs" ng-disabled="ctrl.inprogress"><span class="glyphicon glyphicon-repeat"></span></a>
+				<span ng-if="ctrl.inprogress">
+					<span class="Loading">.</span>Loading...
+				</span>
 			</div>
+			<div class="panel-body">
+				Filter name <input type="text" ng-model="ctrl.params.connectedFilterUserName">
+				Number of lines<input type="text" ng-model="ctrl.params.connectedMaxResults">
+				
+				<div ng-bind-html="ctrl.getListEvents(ctrl.listevents )"></div>
 
-			<span class="Loading" ng-show="securitycarctrl.loading"></span>
-			<div ng-bind-html="securitycarctrl.getListEvents(securitycarctrl.users.connected.listevents )"></div>
-
-			<table class="table table-striped table-hover table-condensed">
-				<tr>
-					<th>User name</th>
-					<th>Connected</th>
-				</tr>
-				<tr ng-repeat="userinfo in securitycarctrl.users.connected.list track by $index">
-					<td>{{userinfo.username}}</td>
-					<td>{{userinfo.lastconnection}}</td>
-					<td>
-						<button class="btn btn-danger btn-xs" ng-click="securitycarctrl.activatedeactivate(userinfo, false)" ng-show="userinfo.isenabled">Deactivate</button>
-						<button class="btn btn-warning btn-xs" ng-click="securitycarctrl.disconnect(userinfo)">Disconnect</button>
-					</td>
-				</tr>
-			</table>	
-			</div>
-	</div>	
+				<table class="table table-striped table-hover table-condensed">
+					<tr>
+						<th>First Name</th>
+						<th>Last Name</th>
+						<th>User name</th>
+						<th>Nb Session</th>
+						<th>Action</th>
+					</tr>
+					<tr ng-repeat="userinfo in ctrl.users.usersconnected track by $index">
+						<td>{{userinfo.firstname}}</td>
+						<td>{{userinfo.lastname}}</td>
+						<td>{{userinfo.username}}</td>
+						<td>{{userinfo.nbsession}}</td>
+						<td>
+							<button class="btn btn-danger btn-xs" ng-click="ctrl.activatedeactivate(userinfo, false)" ng-show="userinfo.isenabled">Deactivate</button>
+							<button class="btn btn-warning btn-xs" ng-click="ctrl.disconnect(userinfo)">Disconnect</button>
+						</td>
+					</tr>
+				</table>	
+			</div> <!--  end panel-body -->
+		</div> <!--  end panel -->
+	</div>	<!-- end userconnected -->
 			
 			
 	<!--   -------------------------------------------------------------------------- -->
@@ -176,21 +230,21 @@
 	<!--                                                                              -->
 	<!-- --------------------------------------------------------------------------   -->
 			
-	<div class="col-lg-12">
+	<div class="col-lg-12" ng_if="ctrl.navbaractiv == 'UsersOperation'">
 		<legend class="text-primary"><span class="glyphicon glyphicon-th"></span>Users operation</legend>
 		<div class="panel panel-primary">
 			<div class="explanation">
 			Search users and information on users
-			Filter on user : <input type="text" ng-model="securitycarctrl.params.useroperationFilteruser">
-			from <input type="text" ng-model="securitycarctrl.params.useroperationStartIndex">
-			 number of lines <input type="text" ng-model="securitycarctrl.params.useroperationMaxResults">
+			Filter on user : <input type="text" ng-model="ctrl.params.useroperationFilteruser">
+			from <input type="text" ng-model="ctrl.params.useroperationStartIndex">
+			 number of lines <input type="text" ng-model="ctrl.params.useroperationMaxResults">
 					
 			</div>
 			
-			<span class="Loading" ng-show="securitycarctrl.loading"></span>
-			<div ng-bind-html="securitycarctrl.getListEvents(securitycarctrl.listevents )"></div>
+			<span class="Loading" ng-show="ctrl.loading"></span>
+			<div ng-bind-html="ctrl.getListEvents(ctrl.listevents )"></div>
 
-			<button class="btn btn-primary btn-xs" ng-click="securitycarctrl.searchUser()" ng-disabled="securitycarctrl.loading">Search</button>
+			<button class="btn btn-primary btn-xs" ng-click="ctrl.searchUser()" ng-disabled="ctrl.loading">Search</button>
 						
 			<table class="table table-striped table-hover table-condensed">
 				<tr>
@@ -202,14 +256,14 @@
 					<th>Status</th>
 					<th></th>
 				</tr>
-				<tr ng-repeat="userinfo in securitycarctrl.users.operations.list track by $index">
+				<tr ng-repeat="userinfo in ctrl.users.operations.list track by $index">
 					<td>{{userinfo.username}}</td>
 					<td>{{userinfo.firstname}}</td>
 					<td>{{userinfo.lastname}}</td>
 					<td>{{userinfo.lastconnection}}</td>
 					<td>{{userinfo.nbtentatives}}
-						<button class="btn btn-success btn-xs" ng-click="securitycarctrl.resetTentative(userinfo)">Set to 0</button>
-						<div ng-bind-html="securitycarctrl.getListEvents( userinfo.listeventsreset )"></div>
+						<button class="btn btn-success btn-xs" ng-click="ctrl.resetTentative(userinfo)">Set to 0</button>
+						<div ng-bind-html="ctrl.getListEvents( userinfo.listeventsreset )"></div>
 					
 					</td>
 					<td>					
@@ -220,13 +274,13 @@
 					<td>
 					<table>
 						<tr><td>
-							<button class="btn btn-info btn-xs" ng-click="securitycarctrl.resetPassword(userinfo)">Generate new password</button>
-							<button class="btn btn-danger btn-xs" ng-show="userinfo.isenabled"  ng-click="securitycarctrl.activatedeactivate(userinfo, false)">Deactivate</button>
-							<button class="btn btn-success btn-xs" ng-show="! userinfo.isenabled" ng-click="securitycarctrl.activatedeactivate(userinfo, true)">Activate</button>
+							<button class="btn btn-info btn-xs" ng-click="ctrl.resetPassword(userinfo)">Generate new password</button>
+							<button class="btn btn-danger btn-xs" ng-show="userinfo.isenabled"  ng-click="ctrl.activatedeactivate(userinfo, false)">Deactivate</button>
+							<button class="btn btn-success btn-xs" ng-show="! userinfo.isenabled" ng-click="ctrl.activatedeactivate(userinfo, true)">Activate</button>
 						</td></tr>
 						<tr><td>
 							{{userinfo.passwordGenerated}}
-							<div ng-bind-html="securitycarctrl.getListEvents( userinfo.listevents )"></div>
+							<div ng-bind-html="ctrl.getListEvents( userinfo.listevents )"></div>
 						</td></tr>
 					</table>
 					</td>
@@ -238,25 +292,77 @@
 		
 	<!--   -------------------------------------------------------------------------- -->
 	<!--                                                                              -->
+	<!--  Server Activity connected                                                                -->
+	<!--                                                                              -->
+	<!-- --------------------------------------------------------------------------   -->
+			
+	<div class="col-lg-12" ng_if="ctrl.navbaractiv == 'ServerActivity'">
+		<div class="panel panel-info">
+			<div class="panel-heading title ng-binding">
+				Server Activity
+				<a ng-click="ctrl.refresh( 'serveractivitystatus' )" class="btn btn-default btn-xs" ng-disabled="ctrl.inprogress"><span class="glyphicon glyphicon-repeat"></span></a>
+				<span ng-if="ctrl.inprogress">
+					<span class="Loading">.</span>Loading...
+				</span>
+			</div>
+			<div class="panel-body">
+				<table class="table table-striped table-hover table-condensed">
+				<tr>
+					<th>Slot</th>
+					<th>Number of hit</th>
+					<th>Average time</th>
+					<th>Pic Tomcat thread</th>					
+					<th>Top 10</th>
+				</tr>
+				<tr ng-repeat="slotactivity in ctrl.serveractivity.httpcall track by $index">
+					<td>{{slotactivity.slottime  | date:'MM/dd/yyyy HH:mm:ss'}}</td>
+					<td style="text-align: right">{{slotactivity.nbhits}}</td>
+					<td style="text-align: right">{{slotactivity.averagetime}} ms</td>
+					<td style="text-align: right">{{slotactivity.picthreadtomcat}}</td>
+					<td>
+						<table>
+							<tr>
+								<th style="font-size: 10px;">URI</th>
+								<th style="font-size: 10px;">Time to execute</th>
+								<th style="font-size: 10px;">Client address</th>
+								<th style="font-size: 10px;">Client host</th>
+							</tr>
+							<tr ng-repeat="url in slotactivity.topurl track by $index">
+								<td style="font-size: 10px;">{{url.uri}}</td>
+								<td style="font-size: 10px;text-align: right">{{url.timetoexecute}} ms</td>
+								<td style="font-size: 10px;">{{url.addr}}</td>
+								<td style="font-size: 10px;">{{url.host}}</td>
+								
+							</tr>
+						</table>
+					
+					</td>
+				</tr>
+				</table>
+			</div>
+		</div>
+	</div>
+	<!--   -------------------------------------------------------------------------- -->
+	<!--                                                                              -->
 	<!--  Parameters                                                                -->
 	<!--                                                                              -->
 	<!-- --------------------------------------------------------------------------   -->
 			
-	<div class="col-lg-12">
+	<div class="col-lg-12" ng_if="ctrl.navbaractiv == 'Parameters'">
 		<legend class="text-primary"><span class="glyphicon glyphicon-th"></span>Parameters</legend>
 		<div class="panel panel-primary">
 			<div class="explanation">
 			Fix parameters
 			</div>
 
-			<span class="Loading" ng-show="securitycarctrl.loading"></span>
-			<div ng-bind-html="securitycarctrl.getListEvents(securitycarctrl.custompage.listevents )"></div>
+			<span class="Loading" ng-show="ctrl.loading"></span>
+			<div ng-bind-html="ctrl.getListEvents(ctrl.custompage.listevents )"></div>
 
-			Password has to be change every : <input type="text" ng-model="securitycarctrl.parameter.nbdayspasswordactif"> days
-			Number of tentative before block: <input type="text" ng-model="securitycarctrl.parameter.nbtentatives">
-			<button class="btn btn-primary btn-xs" ng-click="securitycarctrl.saveParameters()">Update</button><p>
+			Password has to be change every : <input type="text" ng-model="ctrl.parameter.nbdayspasswordactif"> days
+			Number of tentative before block: <input type="text" ng-model="ctrl.parameter.nbtentatives">
+			<button class="btn btn-primary btn-xs" ng-click="ctrl.saveParameters()">Update</button><p>
 			
-			<div ng-bind-html="securitycarctrl.getListEvents(securitycarctrl.parameter.listevents )"></div>
+			<div ng-bind-html="ctrl.getListEvents(ctrl.parameter.listevents )"></div>
 
 		</div>
 	</div>		

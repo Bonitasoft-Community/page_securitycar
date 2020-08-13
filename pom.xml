@@ -4,10 +4,11 @@
 		<bonita.version>7.9.0</bonita.version>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
+		<tomcat.directory>D:/bonita/BPM-SP-7.8.4_3/workspace/tomcat/server/webapps/bonita/WEB-INF/lib</tomcat.directory>
 	</properties>
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.bonitasoft.custompage</groupId>
-	<artifactId>CustomPageSecurityCar</artifactId>
+	<artifactId>SecurityCar</artifactId>
 	<version>2.4.0</version>
 
 	<dependencies>
@@ -17,12 +18,13 @@
 			<version>${bonita.version}</version>
 			<scope>provided</scope>
 		</dependency>
-		<!--  mvn install:install-file -Dfile=console-common-7.9.0.jar -DgroupId=org.bonitasoft.console -DartifactId=console-common -Dversion=7.9.0 -Dpackaging=jar -->
-	<dependency>
-		<groupId>org.bonitasoft.console</groupId>
-		<artifactId>console-common</artifactId>
+		<!-- mvn install:install-file -Dfile=console-common-7.9.0.jar -DgroupId=org.bonitasoft.console -DartifactId=console-common -Dversion=7.9.0 -Dpackaging=jar -->
+		<dependency>
+			<groupId>org.bonitasoft.console</groupId>
+			<artifactId>console-common</artifactId>
 			<version>${bonita.version}</version>
-	</dependency>
+			<scope>provided</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.bonitasoft.log.event</groupId>
 			<artifactId>bonita-event</artifactId>
@@ -40,11 +42,11 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-    <groupId>org.apache.commons</groupId>
-    <artifactId>commons-lang3</artifactId>
-    <version>3.4</version>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.4</version>
 			<scope>provided</scope>
-			</dependency>
+		</dependency>
 		<!-- <dependency> <groupId>org.bonitasoft.search</groupId> <artifactId>BonitaSearchRelation</artifactId> <version>1.0.0</version> </dependency> -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
@@ -64,6 +66,7 @@
 			<version>${bonita.version}</version>
 			<scope>provided</scope>
 		</dependency>
+
 
 	</dependencies>
 
@@ -90,49 +93,71 @@
 			<plugin>
 				<artifactId>maven-jar-plugin</artifactId>
 				<executions>
+					
+
 					<execution>
-						<id>SecurityCarServer</id>
+						<id>Page</id>
 						<goals>
 							<goal>jar</goal>
 						</goals>
 						<phase>package</phase>
 						<configuration>
-							<finalName>SecurityCarServer</finalName>
-							<encoding>ISO-8859-1</encoding>
-							<classifier>1.0.0</classifier>
-							<includes>
-								<include>**/*.*</include>
-							</includes>
+							<classifier>Page</classifier>
+							
 							<excludes>
-								<exclude>**/SecurityCarAPI*.*</exclude>
-								<exclude>**/GraphGenerator*.*</exclude>
-
-
+								<exclude>
+									org/bonitasoft/securitycar/server/*.*
+								</exclude>
 							</excludes>
 						</configuration>
 					</execution>
-
+					
 					<execution>
-						<id>SecurityCarAPI</id>
+						<id>SecurityCarFilter</id>
 						<goals>
 							<goal>jar</goal>
 						</goals>
 						<phase>package</phase>
 						<configuration>
-							<finalName>SecurityCarAPI</finalName>
-							<encoding>ISO-8859-1</encoding>
-							<classifier>1.0.0</classifier>
+							<classifier>Filter</classifier>
+							
 							<includes>
-								<include>**/SecurityCarAPI*.*</include>
-								<include>**/GraphGenerator*.*</include>
-
+								<include>**/server/*.*</include>
 							</includes>
+							<!-- <excludes> <exclude>**/SecurityCarAPI*.*</exclude> <exclude>**/GraphGenerator*.*</exclude> <exclude>**/engine/*.*</exclude> </excludes> -->
 						</configuration>
 					</execution>
 				</executions>
+
 			</plugin>
 
+			<!-- ******************** Copy SecurityCarFilter file under Tomcat Lib **************** -->
+			<plugin>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<id>copy SecurityCarFilter to tomcat/webapps/bonita/WEB-INF/lib</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${tomcat.directory}</outputDirectory>
+							<resources>
+								<resource>
+									<directory>target</directory>
+									<includes>
+										<include>SecurityCar*-Filter.jar</include>
+									</includes>
+								</resource>
+							</resources>
 
+						</configuration>
+					</execution>
+
+				</executions>
+			</plugin>
 
 
 			<!-- ******************** Copy JAR files under lib **************** -->
@@ -155,35 +180,31 @@
 							<excludeScope>provided</excludeScope>
 						</configuration>
 					</execution>
-
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
 					<execution>
-						<id>copy-Jar</id>
+						<id>copy-Specific-Jar-Page</id>
 						<phase>package</phase>
 						<goals>
-							<goal>copy</goal>
+							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
 							<outputDirectory>${basedir}/lib</outputDirectory>
-							<artifactItems>
-								<artifactItem>
-									<groupId>${project.groupId}</groupId>
-									<artifactId>${project.artifactId}</artifactId>
-									<version>${project.version}</version>
-									<overWrite>true</overWrite>
-								</artifactItem>
-							</artifactItems>
 							<resources>
 								<resource>
 									<directory>target</directory>
 									<includes>
-										<include>*.jar</include>
+										<include>*-Page.jar</include>
 									</includes>
 								</resource>
 							</resources>
 
 						</configuration>
 					</execution>
-
 				</executions>
 			</plugin>
 

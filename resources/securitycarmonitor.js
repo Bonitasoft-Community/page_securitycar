@@ -42,7 +42,23 @@ appCommand.controller('SecurityCarControler',
 	}
 	
 	
-	                       
+	this.navbaractiv='AntiTheft';
+	
+	this.getNavClass = function( tabtodisplay )
+	{
+		if (this.navbaractiv === tabtodisplay)
+			return 'ng-isolate-scope active';
+		return 'ng-isolate-scope';
+	}
+
+	this.getNavStyle = function( tabtodisplay )
+	{
+		if (this.navbaractiv === tabtodisplay)
+			return 'border: 1px solid #c2c2c2;border-bottom-color: transparent;';
+		return 'background-color:#cbcbcb';
+	}
+	
+            
 	
 	// --------------------------------------------------------------------------
 	//
@@ -50,6 +66,7 @@ appCommand.controller('SecurityCarControler',
 	//
 	// --------------------------------------------------------------------------
 	this.theft={};
+	this.serveractivity = {};
 	this.users= {};
 	
 	this.users.theft =[];
@@ -73,63 +90,45 @@ appCommand.controller('SecurityCarControler',
 				};
 
 	
-	this.loading= false;
+	this.inprogress= false;
 
 	
-	this.init = function() {
+
+
+	this.refresh= function( action ) {
 		var self=this;
-		if (1==1)
-			return;
-		self.loading=true;
-		var json = encodeURI(angular.toJson(this.params, true));
-		$http.get( '?page=custompage_securitycar&action=init&paramjson='+json)
-				.then( function ( jsonResult ) {
-					// the custom page upgrated is in the list, first position
-					
-					self.listevents 			= jsonResult.data.listevents;
-					self.users.theft			= jsonResult.data.theft;
-					self.users.connected		= jsonResult.data.connected;
-					self.parameter				= jsonResult.data.parameter;
-					self.theft.theftLog 		= jsonResult.data.theftLog;
-					self.theft.theftTimeLine 	= jsonResult.data.theftTimeLine;
-
-					self.loading=false;
-					
-				},
-				function(jsonResult) {
-					self.status			= "Can't connect the server ("+jsonResult.status+")";
-					self.loading=false;
-					});
-
-	}
-	this.init();
-
-	this.refresh= function() {
-		var self=this;
-		self.loading=true;
+		self.inprogress=true;
 
 		var json = encodeURI(angular.toJson(this.params, true));
-		$http.get( '?page=custompage_securitycar&action=refresh&paramjson='+json)
-				.then( function ( jsonResult ) {
-					self.loading=false;
-					// the custom page upgrated is in the list, first position					
-					self.listevents 	= jsonResult.data.listevents;
-					self.users.theft			= jsonResult.data.theft;
-					self.users.connected		= jsonResult.data.connected;
-					self.theft.theftLog 		= jsonResult.data.theftLog;
-					self.theft.theftTimeLine 	= jsonResult.data.theftTimeLine;
-					$scope.theftTimeLine		 = JSON.parse(jsonResult.data.theftGraph);
-					
-					
-
-					
-				},
-				function(jsonResult) {
-					self.status			= "Can't connect the server ("+jsonResult.status+")";
-					self.loading=false;
-					});
+		$http.get( '?page=custompage_securitycar&action='+action+'&paramjson='+json)
+			.success(function(jsonResult, statusHttp, headers, config) {
+				
+				// connection is lost ?
+				if (statusHttp==401 || typeof jsonResult === 'string') {
+					console.log("Redirected to the login page !");
+					window.location.reload();
+				}
+				self.inprogress=false;
+				// the custom page upgrated is in the list, first position					
+				self.listevents 			= jsonResult.listevents;
+				self.users.theft			= jsonResult.theft;
+				self.users.usersconnected	= jsonResult.usersconnected;
+				
+				self.theft.theftTentatives	= jsonResult.theftTentatives;
+				self.theft.theftSlots 		= jsonResult.theftSlots;
+				self.theft.theftTimeLine 	= jsonResult.theftTimeLine;
+				self.serveractivity.httpcall = jsonResult.httpcall;
+				
+				$scope.theftTimeLine		 = JSON.parse(jsonResult.theftGraph);
+				
+				
+			}).error(function(jsonResult, statusHttp, headers, config) {
+				self.status			= "Can't connect the server ("+jsonResult.status+")";
+				self.inprogress=false;
+			});
 	}
-	
+	this.refresh( 'init');
+
 	// --------------------------------------------------------------------------
 	//
 	//  User operation
@@ -137,21 +136,26 @@ appCommand.controller('SecurityCarControler',
 	// --------------------------------------------------------------------------
 	this.searchUser= function() {
 		var self=this;
-		self.loading=true;
+		self.inprogress=true;
 		var json = encodeURI(angular.toJson(this.params, true));
 
 		$http.get( '?page=custompage_securitycar&action=usersoperation&paramjson='+json)
-				.then( function ( jsonResult ) {
-					// the custom page upgrated is in the list, first position
-					
-					self.listevents 			= jsonResult.data.listevents;
-					self.users.operations		= jsonResult.data.operations;
-					self.loading=false;
-				},
-				function(jsonResult) {
-					self.status			= "Can't connect the server ("+jsonResult.status+")";
-					self.loading=false;
-					});
+			.success(function(jsonResult, statusHttp, headers, config) {
+				
+				// connection is lost ?
+				if (statusHttp==401 || typeof jsonResult === 'string') {
+					console.log("Redirected to the login page !");
+					window.location.reload();
+				}
+				// the custom page upgrated is in the list, first position
+				
+				self.listevents 			= jsonResult.data.listevents;
+				self.users.operations		= jsonResult.data.operations;
+				self.inprogress=false;
+			}).error(function(jsonResult, statusHttp, headers, config) {
+				self.status			= "Can't connect the server ("+jsonResult.status+")";
+				self.inprogress=false;
+			});
 	}
 
 	
@@ -170,21 +174,26 @@ appCommand.controller('SecurityCarControler',
 			action="deactivate";
 		if (confirm('Do you want to '+action+' '+userinfo.username+" ? "))
 		{
-			self.loading=true;
+			self.inprogress=true;
 			var param = {'userid':userinfo.userid, 'username':userinfo.username,
 						'connectedStartIndex': this.params.connectedStartIndex, 'connectedMaxResults':this.params.connectedMaxResults,
 					'useroperationFilteruser':this.params.useroperationFilteruser, 'useroperationStartIndex':this.params.useroperationFilteruser, 'useroperationMaxResults':this.params.useroperationFilteruser};
 			var json = encodeURI(angular.toJson(param, true));
 			$http.get( '?page=custompage_securitycar&action='+action+'&paramjson='+json)
-					.then( function ( jsonResult ) {
+				.success(function(jsonResult, statusHttp, headers, config) {
+					
+					// connection is lost ?
+					if (statusHttp==401 || typeof jsonResult === 'string') {
+						console.log("Redirected to the login page !");
+						window.location.reload();
+					}
 						userinfo.listevents 		= jsonResult.data.listevents;
 						userinfo.isenabled 			= jsonResult.data.userIsEnabled;
 						
-						self.loading=false;
-					},
-					function(jsonResult) {
-						self.loading=false;
-						});		
+						self.inprogress=false;
+				}).error(function(jsonResult, statusHttp, headers, config) {
+					self.inprogress=false;
+				});		
 		}
 	}
 
@@ -193,57 +202,72 @@ appCommand.controller('SecurityCarControler',
 		var self=this;
 		if (confirm('Do you want to disconnect '+userinfo.username+" ? "))
 		{
-			self.loading=true;
+			self.inprogress=true;
 			var param = {'userid':userinfo.userid, 'username':userinfo.username,
 						'connectedStartIndex': this.params.connectedStartIndex, 'connectedMaxResults':this.params.connectedMaxResults,
 					'useroperationFilteruser':this.params.useroperationFilteruser, 'useroperationStartIndex':this.params.useroperationFilteruser, 'useroperationMaxResults':this.params.useroperationFilteruser};
 			var json = encodeURI(angular.toJson(param, true));
 			$http.get( '?page=custompage_securitycar&action=disconnect&paramjson='+json)
-					.then( function ( jsonResult ) {
+				.success(function(jsonResult, statusHttp, headers, config) {
+					
+					// connection is lost ?
+					if (statusHttp==401 || typeof jsonResult === 'string') {
+						console.log("Redirected to the login page !");
+						window.location.reload();
+					}
 						userinfo.listevents 		= jsonResult.data.listevents;
 						userinfo.isenabled 			= jsonResult.data.userIsEnabled;
 						
-						self.loading=false;
-					},
-					function(jsonResult) {
-						self.loading=false;
-						});		
+						self.inprogress=false;
+				}).error(function(jsonResult, statusHttp, headers, config) {
+					self.inprogress=false;
+				});		
 		}
 	}
 	
 	this.resetTentative = function( userinfo ) {
 		var self=this;
-		self.loading=true;
+		self.inprogress=true;
 		var param = {'userid':userinfo.userid, 'username':userinfo.username,
 					'connectedStartIndex': this.params.connectedStartIndex, 'connectedMaxResults':this.params.connectedMaxResults,
 					'useroperationFilteruser':this.params.useroperationFilteruser, 'useroperationStartIndex':this.params.useroperationFilteruser, 'useroperationMaxResults':this.params.useroperationFilteruser};
 		var json = encodeURI(angular.toJson(param, true));
 		$http.get( '?page=custompage_securitycar&action=resettentative&paramjson='+json)
-			.then( function ( jsonResult ) {
+			.success(function(jsonResult, statusHttp, headers, config) {
+				
+				// connection is lost ?
+				if (statusHttp==401 || typeof jsonResult === 'string') {
+					console.log("Redirected to the login page !");
+					window.location.reload();
+				}
 				userinfo.listeventsreset 		= jsonResult.data.listevents;
 				if (jsonResult.data.listeventssuccess)
 					userinfo.nbtentative=0;
-				self.loading=false;
-			},
-			function(jsonResult) {
-				self.loading=false;
+				self.inprogress=false;
+			}).error(function(jsonResult, statusHttp, headers, config) {
+				self.inprogress=false;
 				});				
 	}
 	this.resetPassword = function( userinfo ) {
 		var self=this;
-		self.loading=true;
+		self.inprogress=true;
 		var param = {'userid':userinfo.userid, 'username':userinfo.username,
 					'connectedStartIndex': this.params.connectedStartIndex, 'connectedMaxResults':this.params.connectedMaxResults,
 					'useroperationFilteruser':this.params.useroperationFilteruser, 'useroperationStartIndex':this.params.useroperationFilteruser, 'useroperationMaxResults':this.params.useroperationFilteruser};
 		var json = encodeURI(angular.toJson(param, true));
 		$http.get( '?page=custompage_securitycar&action=resetpassword&paramjson='+json)
-			.then( function ( jsonResult ) {
+			.success(function(jsonResult, statusHttp, headers, config) {
+				
+				// connection is lost ?
+				if (statusHttp==401 || typeof jsonResult === 'string') {
+					console.log("Redirected to the login page !");
+					window.location.reload();
+				}
 				userinfo.listevents 		= jsonResult.data.listevents;
 				userinfo.passwordGenerated 		= jsonResult.data.passwordGenerated;
-				self.loading=false;
-			},
-			function(jsonResult) {
-				self.loading=false;
+				self.inprogress=false;
+			}).error(function(jsonResult, statusHttp, headers, config) {
+				self.inprogress=false;
 				});				
 	}
 	// --------------------------------------------------------------------------
@@ -257,7 +281,14 @@ appCommand.controller('SecurityCarControler',
 		var self = this;
 		self.saveinprogress=true;
 		$http.get( '?page=custompage_securitycar&action=loadparameters' )
-		.then( function ( jsonResult ) {
+			.success(function(jsonResult, statusHttp, headers, config) {
+				
+				// connection is lost ?
+				if (statusHttp==401 || typeof jsonResult === 'string') {
+					console.log("Redirected to the login page !");
+					window.location.reload();
+				}
+
 				console.log("loadparameters",jsonResult.data);
 				self.saveinprogress=false;
 				// $.extend( self.param, jsonResult.data); 
@@ -265,12 +296,11 @@ appCommand.controller('SecurityCarControler',
 				self.parameter		= jsonResult.data.parameter;
 				self.listevents		= jsonResult.data.listevents;
 				self.listcustompage();
-			},
-		function(jsonResult ) {
-			self.saveinprogress=false;
+			}).error(function(jsonResult, statusHttp, headers, config) {
+				self.saveinprogress=false;
 
-			// alert("loadparameters Error : "+ angular.toJson( jsonResult.data ) );
-			this.listcustompage();
+				// alert("loadparameters Error : "+ angular.toJson( jsonResult.data ) );
+				this.listcustompage();
 			}
 		);
 		
@@ -285,13 +315,17 @@ appCommand.controller('SecurityCarControler',
 		var json = encodeURI(angular.toJson(self.parameter, false));
 		
 		$http.get( '?page=custompage_securitycar&action=saveParameters&paramjson='+json )
-		.then( function ( jsonResult ) {	
+			.success(function(jsonResult, statusHttp, headers, config) {
+				
+				// connection is lost ?
+				if (statusHttp==401 || typeof jsonResult === 'string') {
+					console.log("Redirected to the login page !");
+					window.location.reload();
+				}
 				self.parameter.listevents= jsonResult.data.listevents;
 				self.saveinprogress=false;
-		},
-		function(jsonResult ) {
-			alert("Error when save parameters ("+jsonResult.status+")");
-			self.saveinprogress=false;
+			}).error(function(jsonResult, statusHttp, headers, config) {
+				self.saveinprogress=false;
 		})	
 	}
 	// --------------------------------------------------------------------------

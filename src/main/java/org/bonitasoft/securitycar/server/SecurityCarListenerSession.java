@@ -1,22 +1,14 @@
-package org.bonitasoft.securitycar.listener;
+package org.bonitasoft.securitycar.server;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 
-import org.bonitasoft.console.common.server.utils.SessionUtil;
-import org.bonitasoft.engine.session.APISession;
-import org.bonitasoft.engine.session.Session;
-import org.bonitasoft.securitycar.SecurityCarAPI;
-import org.bonitasoft.securitycar.TowerControl;
+import org.bonitasoft.securitycar.engine.TowerControl;
 
 /**
  * Add the session listener in the web?xml <!-- security car --> <listener>
@@ -29,11 +21,11 @@ public class SecurityCarListenerSession implements HttpSessionListener {
 	private static Logger logger = Logger.getLogger(SecurityCarListenerSession.class.getName());
 	public String logHeader = "--------------------- Listener SecurityCar ";
 
-	public Map<String, HttpSession> mListSession = new HashMap<String, HttpSession>();
+	public Map<String, HttpSession> mListSession = new HashMap<>();
 
 	public SecurityCarListenerSession() {
-		TowerControl towerControl = TowerControl.getInstance();
-		towerControl.registerListener(this);
+		Butler butler = Butler.getInstance();
+		butler.registerListener(this);
 	}
 
 	/**

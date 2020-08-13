@@ -1,4 +1,4 @@
-package org.bonitasoft.securitycar;
+package org.bonitasoft.securitycar.users;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -19,7 +19,7 @@ import org.bonitasoft.engine.search.SearchOptionsBuilder;
 import org.bonitasoft.engine.search.SearchResult;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
-import org.bonitasoft.securitycar.listener.SecurityCarListenerSession;
+import org.bonitasoft.securitycar.server.SecurityCarListenerSession;
 
 public class UsersCustomInfo {
 	private static Logger logger = Logger.getLogger(SecurityCarListenerSession.class.getName());

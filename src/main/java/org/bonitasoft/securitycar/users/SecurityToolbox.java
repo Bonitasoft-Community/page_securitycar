@@ -1,4 +1,4 @@
-package org.bonitasoft.securitycar;
+package org.bonitasoft.securitycar.users;
 
 import java.util.Map;
 
