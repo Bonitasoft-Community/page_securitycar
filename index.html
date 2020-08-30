@@ -65,6 +65,9 @@
 			<li ng-class="{active: active, disabled: false}" id="form-tab" heading="Parameters" active="true" title="Parameters" select="ctrl.navbaractiv == 'Parameters'" class="{{ctrl.getNavClass('Parameters')}}" style="{{ctrl.getNavStyle('Parameters')}}">
 				  <a  ng-click="ctrl.navbaractiv='Parameters'" class="ng-binding">Parameters</a>
 			</li>
+			<li ng-class="{active: active, disabled: false}" id="form-tab" heading="Installation" active="true" title="Installation" select="ctrl.navbaractiv == 'Installation'" class="{{ctrl.getNavClass('Installation')}}" style="{{ctrl.getNavStyle('Installation')}}">
+				  <a  ng-click="ctrl.navbaractiv='Installation'" class="ng-binding">Installation</a>
+			</li>
 
 		</ul>
 		
@@ -256,7 +259,7 @@
 					<th>Status</th>
 					<th></th>
 				</tr>
-				<tr ng-repeat="userinfo in ctrl.users.operations.list track by $index">
+				<tr ng-repeat="userinfo in ctrl.users.operations track by $index">
 					<td>{{userinfo.username}}</td>
 					<td>{{userinfo.firstname}}</td>
 					<td>{{userinfo.lastname}}</td>
@@ -366,6 +369,89 @@
 
 		</div>
 	</div>		
+	
+	<!--   -------------------------------------------------------------------------- -->
+	<!--                                                                              -->
+	<!--  Installation                                                               -->
+	<!--                                                                              -->
+	<!-- --------------------------------------------------------------------------   -->
+			
+	<div class="col-lg-12" ng_if="ctrl.navbaractiv == 'Installation'">
+		<p>
+		<div class="panel panel-info">
+			<div class="panel-heading ">
+				Install the SecurityCar Filter</h1>
+			</div>
+			<div class="panel panel-body">
+				This component is mandatory to register every attack, and register who logs the portal.<br>
+				<i>Note: in a cluster, this procedure has to be done on <b>each node</b> on the Cluster.</i>
+				
+				<h3>1. Stop the Bonita Server</h3>
+					<div class="well">
+						stop-bonita.[sh|.bat]
+					</div>
+				
+				<h3>2. Copy the SecurityCar-<version>-Filter.jar</h3>
+					This library is available under the additionallib directory, in the ZIP file.<br>
+					Copy it under the web application library: <TOMCAT>/webapps/bonita/WEB-INF/lib
+				
+				<h3>3. Reference the filter</h3>
+				Modify the <TOMCAT>/webapps/bonita/WEB-INF/web.xml, add these three components. Add it after an existing Filter in the XML.
+				
+				<div class="well">
+			&lt;!-- SecurityCar Filter --&gt;<br>
+			  &lt;filter&gt;<br>
+		        &lt;filter-name&gt;SecurityCarFilter&lt;/filter-name&gt;<br>
+		        &lt;filter-class&gt;org.bonitasoft.securitycar.server.SecurityCarFilter&lt;/filter-class&gt;<br>
+		    &lt;/filter&gt;<br>
+		    <br>
+		    &lt;!-- SecurityCar mapping --&gt;<br>
+			 &lt;filter-mapping&gt;<br>
+		        &lt;filter-name&gt;SecurityCarFilter&lt;/filter-name&gt;<br>
+		        &lt;url-pattern&gt;/portal/*&lt;/url-pattern&gt;<br>
+				&lt;url-pattern&gt;/bonita/*&lt;/url-pattern&gt;<br>
+			&lt;/filter-mapping&gt;<br>
+			<br>
+			&lt;!-- SecurityCar Listener --&gt;<br>
+			 &lt;listener&gt;<br>
+				&lt;listener-class&gt;org.bonitasoft.securitycar.server.SecurityCarListenerSession&lt;/listener-class&gt;<br>
+			&lt;/listener&gt;<br>
+				</div>
+				
+				<h3>4. Restart the server</h3>
+					<div class="well">
+						start-bonita.[sh|.bat]
+					</div>
+			</div>
+		</div>
+		
+		<div class="panel panel-info">
+			<div class="panel-heading ">
+				Install the Valve
+			</div>
+			<div class="panel-body">
+				The valve register all URL arriving on the server, one line per request. Attention, the file may become huge !<br>
+				<i>Note: in a cluster, this procedure has to be done on <b>each node</b> on the Cluster.</i>
+				
+				<h3>1. Stop the Bonita Server</h3>
+				<div class="well">
+						stop-bonita.[sh|.bat]
+				</div>
+				<h3>2. Reference the Valve</h3>
+				Modify the <TOMCAT>/conf/server.xml, add this part <b>under  &lt;Host appBase="webapps"... </b> XML node
+				<div class="well">
+					   &lt;Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs" pattern="%D;%U;%h;%s;%b;%t;&quot;%r&quot;" prefix="access_log" suffix=".csv"/&gt;<br>
+				</div>
+				Note: for the Tomcat behind the studio, the original source in under <STUDIO>/workspace/server_configuration/tomcat_conf/server.xml
+				
+				
+				<h3>3. Restart the Bonita server</h3>
+					<div class="well">
+						start-bonita.[sh|.bat]
+					</div>
+			</div>
+		</div>
+	</div>
 			
 </div> <!--  end div controler -->
 

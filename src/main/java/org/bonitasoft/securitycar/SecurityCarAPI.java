@@ -36,6 +36,7 @@ import org.bonitasoft.securitycar.engine.TowerControl.ActivityReportParameter;
 import org.bonitasoft.securitycar.engine.TowerControl.TheftParameter;
 import org.bonitasoft.securitycar.engine.TowerControl.TheftReport;
 import org.bonitasoft.securitycar.engine.TowerControl.UserConnected;
+import org.bonitasoft.securitycar.server.Butler;
 import org.bonitasoft.securitycar.server.Butler.RegisterTentative;
 import org.bonitasoft.securitycar.server.Butler.SlotStatistics;
 import org.bonitasoft.securitycar.server.Butler.SlotUrl;
@@ -56,7 +57,12 @@ public class SecurityCarAPI {
     private static BEvent EventListenerNotDeployed = new BEvent(SecurityCarAPI.class.getName(), 5, Level.APPLICATIONERROR, "Listener not deployed", "To keep information of connected user, a listener must be deployed", "User connected can't be track", "Deploy the listener");
     private static BEvent EventException = new BEvent(SecurityCarAPI.class.getName(), 6, Level.APPLICATIONERROR, "Exception during execution", "The execution failed", "No result", "Check the exception");
     private static BEvent EventResetSuccess = new BEvent(SecurityCarAPI.class.getName(), 7, Level.SUCCESS, "Reset with success", "The number of tentative is set to 0 with success");
-    private static BEvent EventCantUpdatePassword = new BEvent(SecurityCarAPI.class.getName(), 8, Level.APPLICATIONERROR, "Can't upate the password", "The password can't be updated", "Password does not change", "Check exception");
+    private final static BEvent EventCantUpdatePassword = new BEvent(SecurityCarAPI.class.getName(), 8, Level.APPLICATIONERROR, "Can't update the password", "The password can't be updated", "Password does not change", "Check exception");
+    private final static BEvent EventCantDisconnectUser = new BEvent(SecurityCarAPI.class.getName(), 9, Level.APPLICATIONERROR, "Can't disconnect the user", "The user can't be disconnect", "User is still connected", "Check exception");
+
+    private static final String CST_JSON_USERID = "userid";
+    private static final String CST_JSON_USERNAME = "username";
+    private static final String CST_JSON_NBTENTATIVES = "nbtentatives";
 
     /**
      * SecurityParameter
@@ -102,10 +108,10 @@ public class SecurityCarAPI {
             securityParameter.theftMaxResults = SecurityToolbox.getInteger(jsonHash, "theftMaxResults", 100);
 
             securityParameter.paramDaysPasswordActif = SecurityToolbox.getInteger(jsonHash, "nbdayspasswordactif", 0);
-            securityParameter.paramMaxOfTentatives = SecurityToolbox.getInteger(jsonHash, "nbtentatives", 0);
+            securityParameter.paramMaxOfTentatives = SecurityToolbox.getInteger(jsonHash, CST_JSON_NBTENTATIVES, 0);
 
-            securityParameter.userId = SecurityToolbox.getLong(jsonHash.get("userid"), null);
-            securityParameter.userName = SecurityToolbox.getString(jsonHash, "username", "");
+            securityParameter.userId = SecurityToolbox.getLong(jsonHash.get(CST_JSON_USERID), null);
+            securityParameter.userName = SecurityToolbox.getString(jsonHash, CST_JSON_USERNAME, "");
 
             securityParameter.tenantId = 1;
             return securityParameter;
@@ -168,6 +174,7 @@ public class SecurityCarAPI {
                 List<Map<String,Object>> listUsersMap = new ArrayList<>();
                 for (UserConnected userConnected : activityReport.listUsersConnected) {
                     Map<String,Object> record = new HashMap<>();
+                    record.put( CST_JSON_USERID, userConnected.user.getId()); 
                     record.put("firstname", userConnected.user.getFirstName());
                     record.put("lastname", userConnected.user.getLastName());
                     record.put("username", userConnected.user.getUserName());
@@ -177,7 +184,12 @@ public class SecurityCarAPI {
                 }
                 map.put("usersconnected", listUsersMap);
             }
-            
+
+            // activity report
+            if (listUsersOperations!=null ) {
+                map.put("useroperations", listUsersOperations.mResult);
+            }
+
             if (activityReport!=null && activityReport.mapHttpcallSlot !=null) {
                    
                 List<Map<String,Object>> listhttpcallMap = new ArrayList<>();
@@ -215,7 +227,7 @@ public class SecurityCarAPI {
             GraphGenerator graphGenerator = new GraphGenerator();
 
             SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHH");
-            List<GraphRange> listRange = new ArrayList<GraphGenerator.GraphRange>();
+            List<GraphRange> listRange = new ArrayList<>();
             for (int i = 0; i < 2 * 24 * 6; i++) {
                 String key = sdf.format(c.getTime());
                 String title = i % 6 == 0 ? key : "";
@@ -231,7 +243,7 @@ public class SecurityCarAPI {
 
             map.put("parameter", parameter);
             parameter.put("nbdayspasswordactif", paramDaysPasswordActif);
-            parameter.put("nbtentatives", paramMaxOfTentatives);
+            parameter.put(CST_JSON_NBTENTATIVES, paramMaxOfTentatives);
 
             map.put("passwordGenerated", passwordGenerated);
 
@@ -264,8 +276,8 @@ public class SecurityCarAPI {
     public SecurityStatus init(SecurityParameter securityParameter, IdentityAPI identityAPI) {
         SecurityStatus securityStatus = new SecurityStatus();
         TowerControl towerControl = TowerControl.getInstance();
-
-        towerControl.loadParameters(securityParameter.tenantId);
+        securityStatus.listEvents.addAll( towerControl.init(securityParameter.tenantId));
+        securityStatus.listEvents.addAll( towerControl.loadParameters(securityParameter.tenantId));
 
         securityStatus.paramDaysPasswordActif = towerControl.paramDaysPasswordActif;
         securityStatus.paramMaxOfTentatives = towerControl.paramMaxOfTentatives;
@@ -498,7 +510,9 @@ public class SecurityCarAPI {
         logger.info(logHeader + ".searchUsers : filterUser[" + filterUser + "] startIndex[" + startIndex + "] maxResult[" + maxResults + "]");
 
         try {
-
+            Butler butler = Butler.getInstance();
+            List<RegisterTentative> listCurrentTentatives = butler.getTentatives();
+            
             SearchOptionsBuilder optionsBuilder = new SearchOptionsBuilder(startIndex, maxResults);
             if (filterUser != null && filterUser.trim().length() > 0)
                 optionsBuilder.filter(UserSearchDescriptor.USER_NAME, filterUser);
@@ -507,13 +521,19 @@ public class SecurityCarAPI {
 
             SearchResult<User> search = identityAPI.searchUsers(optionsBuilder.done());
             information.totalResult = search.getCount();
-            Map<Long, Map<String, Object>> directAccess = new HashMap<Long, Map<String, Object>>();
+            Map<Long, Map<String, Object>> directAccess = new HashMap<>();
             for (User user : search.getResult()) {
                 logger.info(logHeader + ".searchUsers : found user[" + user.getUserName() + "] id[" + user.getId() + "]");
                 Map<String, Object> userMap = information.addOneResult();
                 fillMapWithUser(userMap, user);
 
-                userMap.put("nbtentatives", 0);
+                // ask the towercontrol the default value
+                userMap.put(CST_JSON_NBTENTATIVES, 0);
+                for (RegisterTentative registerTentative : listCurrentTentatives)
+                    if (user.getUserName().equals( registerTentative.userName)) {
+                        userMap.put(CST_JSON_NBTENTATIVES, registerTentative.nbTentatives);
+                    }
+                
 
                 if (!user.isEnabled())
                     userMap.put("status", UserStatusDisable);
@@ -531,7 +551,7 @@ public class SecurityCarAPI {
             int count = 0;
             int nbPerPage = 10;
             while (count < information.mResult.size()) {
-                List<Long> listPageUserId = new ArrayList<Long>();
+                List<Long> listPageUserId = new ArrayList<>();
                 for (int i = 0; i < nbPerPage; i++) {
                     if (count + i < information.mResult.size()) {
                         listPageUserId.add((Long) information.mResult.get(count + i).get("userid"));
@@ -550,7 +570,7 @@ public class SecurityCarAPI {
                     logger.info(logHeader + ".searchUsers : found additionnal inform for user[" + customerUserInfo.getUserId() + "] defId[" + customerUserInfo.getDefinitionId() + "] value[" + customerUserInfo.getValue() + "]");
 
                     if (customerUserInfo.getDefinitionId() == userCustomInfo.mDefinitionTentative)
-                        mapUserInfo.put("nbtentatives", customerUserInfo.getValue());
+                        mapUserInfo.put(CST_JSON_NBTENTATIVES, customerUserInfo.getValue());
                     if (customerUserInfo.getDefinitionId() == userCustomInfo.mDefinitionLastChangePassword) {
                         Long lastChangePasswordLong = SecurityToolbox.getLong(customerUserInfo.getValue(), null);
                         if (lastChangePasswordLong != null)
@@ -562,7 +582,7 @@ public class SecurityCarAPI {
 
             // ok, reprocess to set the status
             for (int i = 0; i < information.mResult.size(); i++) {
-                int nbTentative = SecurityToolbox.getInteger(information.mResult.get(i).get("nbtentatives"), 0);
+                int nbTentative = SecurityToolbox.getInteger(information.mResult.get(i).get(CST_JSON_NBTENTATIVES), 0);
                 if (nbTentative > maxTentatives)
                     information.mResult.get(i).put("status", UserStatusTheft);
             }
@@ -617,8 +637,11 @@ public class SecurityCarAPI {
         logger.info(logHeader + ".disconnect : username[" + securityParameter.userName + "] userId[" + securityParameter.userId + "] ");
         TowerControl towerControl = TowerControl.getInstance();
 
+        try {
         securityStatus.listEvents = towerControl.disconnect(securityParameter.userId, identityAPI);
-
+        } catch(Exception e) {
+            securityStatus.listEvents.add( new BEvent(EventCantDisconnectUser, e, "User ["+securityParameter.userName+"] Id:["+securityParameter.userId+"]") );
+        }
         return securityStatus;
     }
 

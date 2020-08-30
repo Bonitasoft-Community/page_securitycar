@@ -17,8 +17,13 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.bonitasoft.engine.api.IdentityAPI;
 import org.bonitasoft.engine.exception.UpdateException;
+import org.bonitasoft.engine.identity.CustomUserInfoDefinition;
+import org.bonitasoft.engine.identity.CustomUserInfoValue;
+import org.bonitasoft.engine.identity.CustomUserInfoValueSearchDescriptor;
 import org.bonitasoft.engine.identity.User;
 import org.bonitasoft.engine.identity.UserUpdater;
+import org.bonitasoft.engine.search.SearchOptionsBuilder;
+import org.bonitasoft.engine.search.SearchResult;
 import org.bonitasoft.securitycar.server.Butler.RegisterTentative;
 
 import groovy.transform.Synchronized;
@@ -55,7 +60,7 @@ public class Butler {
     public void registerListener(SecurityCarListenerSession listener) {
         mSecurityCarListenerSession = listener;
     }
-  
+
     /* -------------------------------------------------------------------- */
     /*                                                                      */
     /* Register any tentative to connecct */
@@ -80,6 +85,7 @@ public class Butler {
 
     /**
      * Each time a user connect, we go via this method
+     * 
      * @param tenantId
      * @param userName
      * @param httpRequest
@@ -90,7 +96,7 @@ public class Butler {
         String keyRegister = tenantId + "#" + userName;
         RegisterTentative register = null;
         /// optimisation
-        if (correct && ! mapTentativesRegistration.containsKey(keyRegister))
+        if (correct && !mapTentativesRegistration.containsKey(keyRegister))
             return; // don't entrance the synchronization
         synchronized (mapTentativesRegistration) {
             mapTentativesRegistration.computeIfAbsent(keyRegister, val -> new RegisterTentative(tenantId, userName));
@@ -108,6 +114,10 @@ public class Butler {
                 register.isFinalyCorrect = true;
                 return; // end of the story here
             }
+
+            // Here, we have to register the tentative
+            registerInUserCustom(tenantId, userName, identityAPI);
+
             register.nbTentatives++;
             register.remoteAddr = httpRequest.getRemoteAddr();
             register.remoteHost = httpRequest.getRemoteHost();
@@ -143,10 +153,10 @@ public class Butler {
             userUpdater.setEnabled(false);
             try {
                 User user = identityAPI.getUserByUserName(userName);
-                register.userExists=true;
+                register.userExists = true;
                 identityAPI.updateUser(user.getId(), userUpdater);
                 register.userIsDisabled = true;
-            }catch(UpdateException ue) {
+            } catch (UpdateException ue) {
                 // do nothing, user exist, update failed (already disabled?)
             } catch (Exception e) {
                 // no log, maybe the user does not exist
@@ -163,6 +173,7 @@ public class Butler {
     /**
      * return the last Tentative Slot
      * The map is a Linked map, so the first one is the older slot
+     * 
      * @return
      */
     public Map<String, SlotStatistics> getTentativesSlot() {
@@ -189,24 +200,25 @@ public class Butler {
         public long lastTentativeTime;
         public String remoteAddr;
         public String remoteHost;
-        
-        public boolean userIsDisabled= false;
-        public boolean userExists=false;
+
+        public boolean userIsDisabled = false;
+        public boolean userExists = false;
 
         RegisterTentative(long tenantId, String userName) {
             this.tenantId = tenantId;
             this.userName = userName;
         }
-        public Map<String,Object> getMap() {
-            Map<String,Object> record = new HashMap<>();
+
+        public Map<String, Object> getMap() {
+            Map<String, Object> record = new HashMap<>();
             record.put("tenantid", tenantId);
             record.put("userName", userName);
-            record.put("nbTentatives",  nbTentatives);
+            record.put("nbTentatives", nbTentatives);
             record.put("isFinalyCorrect", isFinalyCorrect);
             record.put("lastTentativeTime", lastTentativeTime);
             record.put("remoteAddr", remoteAddr);
             record.put("remoteHost", remoteHost);
-            record.put("userIsDisabled",userIsDisabled);
+            record.put("userIsDisabled", userIsDisabled);
             record.put("userExist", userExists);
 
             return record;
@@ -215,7 +227,7 @@ public class Butler {
 
     /* -------------------------------------------------------------------- */
     /*                                                                      */
-    /* Register HTTP to keep in mind the heavest URL                        */
+    /* Register HTTP to keep in mind the heavest URL */
     /*                                                                      */
     /* -------------------------------------------------------------------- */
 
@@ -264,14 +276,13 @@ public class Butler {
     /**
      * Return the HttpCall
      * The Map is a LinkedHashMap, so the first one is the older slot
+     * 
      * @return
      */
     public Map<String, SlotStatistics> getMapHttpCallSlot() {
         return mapHttpCallSlot;
     }
-    
-    
-    
+
     /* -------------------------------------------------------------------- */
     /*                                                                      */
     /* SlotStatistics */
@@ -295,17 +306,18 @@ public class Butler {
             this.slottime = slotTime;
         }
 
-        public Map<String,Object> getMap() {
-            Map<String,Object> record = new HashMap<>();
+        public Map<String, Object> getMap() {
+            Map<String, Object> record = new HashMap<>();
             record.put("slotNumber", slotNumber);
             record.put("slottime", slottime);
-            record.put("nbHits",  nbHits);
+            record.put("nbHits", nbHits);
             record.put("sumTime", sumTime);
             record.put("picThreadTomcat", picThreadTomcat);
             record.put("picThreadWorkers", picThreadWorkers);
             record.put("picThreadConnectors", picThreadConnectors);
             return record;
-        }        
+        }
+
         /**
          * return the range of the execution in the listSlotUrl
          * 
@@ -330,14 +342,14 @@ public class Butler {
      */
     private SlotStatistics getCurrentSlotStatistics(Map<String, SlotStatistics> slotMap) {
         Calendar c = Calendar.getInstance();
-        
-        String slotNumber = String.valueOf(c.get(Calendar.YEAR)) 
-                + String.format("%02d", c.get(Calendar.MONTH)) 
-                + String.format("%02d", c.get(Calendar.DAY_OF_MONTH)) 
+
+        String slotNumber = String.valueOf(c.get(Calendar.YEAR))
+                + String.format("%02d", c.get(Calendar.MONTH))
+                + String.format("%02d", c.get(Calendar.DAY_OF_MONTH))
                 + String.format("%02d", c.get(Calendar.HOUR_OF_DAY))
-                + String.valueOf( (int) ( (Calendar.MINUTE) / 10 ) )
-                +"0";
-    
+                + String.valueOf((int) ((Calendar.MINUTE) / 10))
+                + "0";
+
         c.set(Calendar.SECOND, 0);
         c.set(Calendar.MILLISECOND, 0);
         c.set(Calendar.MINUTE, 10 * ((int) c.get(Calendar.MINUTE) / 10));
@@ -371,7 +383,7 @@ public class Butler {
 
     /* -------------------------------------------------------------------- */
     /*                                                                      */
-    /* getThreadPhoto : via a ThreadDump, capture the number of thread      */
+    /* getThreadPhoto : via a ThreadDump, capture the number of thread */
     /*                                                                      */
     /* -------------------------------------------------------------------- */
 
@@ -404,4 +416,38 @@ public class Butler {
         }
         return threadPhoto;
     }
+
+    private final static String USERTENTATIVE = "USERTENTATIVECONNECTION";
+
+    private void registerInUserCustom(long tenantId, String userName, IdentityAPI identityAPI) {
+        
+        try 
+        {
+            Long definitionTentative = null;
+            List<CustomUserInfoDefinition> listInfo = identityAPI.getCustomUserInfoDefinitions(0, 10000);
+            for (CustomUserInfoDefinition info : listInfo) {
+                if (info.getName().equals(USERTENTATIVE))
+                    definitionTentative = info.getId();
+            }
+            if (definitionTentative==null) {
+                // not exist, the custom page may create it, not the butler
+                return;
+            }
+            User user= identityAPI.getUserByUserName(userName);
+        
+        SearchOptionsBuilder searchOptionsBuilder = new SearchOptionsBuilder(0, 1);
+        searchOptionsBuilder.filter(CustomUserInfoValueSearchDescriptor.DEFINITION_ID, definitionTentative);
+        searchOptionsBuilder.filter(CustomUserInfoValueSearchDescriptor.USER_ID, user.getId());
+        
+        SearchResult<CustomUserInfoValue> searchResult = identityAPI.searchCustomUserInfoValues(searchOptionsBuilder.done());
+        long currentValue = Integer.valueOf( searchResult.getCount()>0? searchResult.getResult().get(0).getValue():"0");
+        currentValue++;
+        identityAPI.setCustomUserInfoValue(definitionTentative, user.getId(), String.valueOf(currentValue));
+
+        }catch(Exception e) {
+            // nothing to report here
+        }
+
+    }
+
 }

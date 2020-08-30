@@ -208,6 +208,33 @@
 				</executions>
 			</plugin>
 
+			<plugin>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<id>copy-Specific-Jar-Quartz</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${basedir}/additionallib</outputDirectory>
+							<resources>
+								<resource>
+									<directory>target</directory>
+									<includes>
+										<include>*-Filter.jar</include>										
+									</includes>
+								</resource>
+							</resources>
+
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			
+			
 			<!-- ******************** Generate the Resource (ZIP FILE) -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

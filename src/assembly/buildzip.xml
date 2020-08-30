@@ -17,6 +17,7 @@
 				<include>*</include>
 				<include>*.jar</include>
 				<include>lib/*.jar</include>
+				<include>additionallib/*.jar</include>
 				<include>resources/**</include>
 				<include>src/**</include>
 			</includes>

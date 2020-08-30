@@ -300,6 +300,12 @@ public class TowerControl {
      */
     public long paramLastTimeLoad;
 
+    public List<BEvent> init( long tenantId) {
+        BonitaProperties bonitaProperties = new BonitaProperties(UsersCustomInfo.PROPERTIESNAME, tenantId);
+        // init: load parameter and check the database
+        bonitaProperties.setCheckDatabase(true);
+        return bonitaProperties.load();        
+    }
     /**
      * loadParameters
      * 
@@ -307,9 +313,9 @@ public class TowerControl {
      * @param securityStatus
      */
     public List<BEvent> loadParameters(long tenantId) {
-        List<BEvent> listEvents = new ArrayList<BEvent>();
+        List<BEvent> listEvents = new ArrayList<>();
         BonitaProperties bonitaProperties = new BonitaProperties(UsersCustomInfo.PROPERTIESNAME, tenantId);
-
+        bonitaProperties.setCheckDatabase(false);
         listEvents.addAll(bonitaProperties.load());
 
         String dayPasswordActifSt = bonitaProperties.getProperty(ParamDaysPasswordActif, "0");
@@ -330,6 +336,7 @@ public class TowerControl {
     public SecurityStatus saveParameters(SecurityParameter securityParameter) {
         SecurityStatus securityStatus = new SecurityStatus();
         BonitaProperties bonitaProperties = new BonitaProperties(UsersCustomInfo.PROPERTIESNAME, securityParameter.tenantId);
+        bonitaProperties.setCheckDatabase(false);
 
         securityStatus.listEvents.addAll(bonitaProperties.load());
 
