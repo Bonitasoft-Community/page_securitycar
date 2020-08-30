@@ -8,6 +8,8 @@ Administrator can see:
 * see who are currently connected
 * can manage user privilege, like enable/disable an user, reset the password.
 
+<img src="screenshot_securitycar.jpg">
+
 # How to Install the function?
 The function is compose by a custom page and filters. 
 1. Install filters
