@@ -9,7 +9,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.bonitasoft.custompage</groupId>
 	<artifactId>SecurityCar</artifactId>
-	<version>1.0.1</version>
+	<version>1.0.2</version>
 
 	<dependencies>
 		<dependency>
