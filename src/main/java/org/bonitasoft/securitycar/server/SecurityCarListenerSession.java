@@ -8,8 +8,6 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 
-import org.bonitasoft.securitycar.engine.TowerControl;
-
 /**
  * Add the session listener in the web?xml <!-- security car --> <listener>
  * <listener-class>org.bonitasoft.securitycar.listener.SecurityCarListenerSession</listener-class>

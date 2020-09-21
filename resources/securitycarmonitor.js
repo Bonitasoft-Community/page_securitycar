@@ -100,7 +100,7 @@ appCommand.controller('SecurityCarControler',
 		self.inprogress=true;
 
 		var json = encodeURI(angular.toJson(this.params, true));
-		var t= 
+		
 		$http.get( '?page=custompage_securitycar&action='+action+'&paramjson='+json+'&t='+Date.now())
 			.success(function(jsonResult, statusHttp, headers, config) {
 				
@@ -110,23 +110,32 @@ appCommand.controller('SecurityCarControler',
 					window.location.reload();
 				}
 				self.inprogress=false;
-				// the custom page upgrated is in the list, first position					
-				self.listevents 				= jsonResult.listevents;
+				// the custom page upgrated is in the list, first position
+				// console.log("jsonResult="+angular.toJson( jsonResult));
+
+				self.listevents 					= jsonResult.listevents;
 				if (jsonResult.theft)
-					self.users.theft			= jsonResult.theft;
+					self.users.theft				= jsonResult.theft;
+				
 				if (jsonResult.usersconnected)
-					self.users.usersconnected	= jsonResult.usersconnected;
+					self.users.usersconnected		= jsonResult.usersconnected;
 				
 				if (jsonResult.theftTentatives)
-					self.theft.theftTentatives	= jsonResult.theftTentatives;
-				if (jsonResult.theftSlots)
-					self.theft.theftSlots 		= jsonResult.theftSlots;
-				if (jsonResult.theftTimeLine)
-					self.theft.theftTimeLine 	= jsonResult.theftTimeLine;
-				if (jsonResult.httpcall)
-					self.serveractivity.httpcall = jsonResult.httpcall;
+					self.theft.theftTentatives		= jsonResult.theftTentatives;
 				
-				$scope.theftTimeLine		 = JSON.parse(jsonResult.theftGraph);
+				if (jsonResult.theftSlots)
+					self.theft.theftSlots 			= jsonResult.theftSlots;
+				
+				if (jsonResult.theftTimeLine)
+					self.theft.theftTimeLine 		= jsonResult.theftTimeLine;
+				
+				if (jsonResult.httpcall)
+					self.serveractivity.httpcall 	= jsonResult.httpcall;
+				
+				if (jsonResult.parameter)
+					self.parameter 					= jsonResult.parameter;
+				
+				$scope.theftTimeLine		 		= JSON.parse(jsonResult.theftGraph);
 				
 				
 			}).error(function(jsonResult, statusHttp, headers, config) {

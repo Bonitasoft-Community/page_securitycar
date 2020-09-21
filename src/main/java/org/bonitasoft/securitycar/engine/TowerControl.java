@@ -16,12 +16,8 @@ import javax.servlet.http.HttpSession;
 import org.bonitasoft.console.common.server.utils.SessionUtil;
 import org.bonitasoft.engine.api.IdentityAPI;
 import org.bonitasoft.engine.exception.SearchException;
-import org.bonitasoft.engine.identity.CustomUserInfoValue;
-import org.bonitasoft.engine.identity.CustomUserInfoValueSearchDescriptor;
 import org.bonitasoft.engine.identity.User;
-import org.bonitasoft.engine.identity.UserNotFoundException;
 import org.bonitasoft.engine.identity.UserSearchDescriptor;
-import org.bonitasoft.engine.search.Order;
 import org.bonitasoft.engine.search.SearchOptionsBuilder;
 import org.bonitasoft.engine.search.SearchResult;
 import org.bonitasoft.engine.session.APISession;
@@ -29,13 +25,11 @@ import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.log.event.BEventFactory;
 import org.bonitasoft.properties.BonitaProperties;
-import org.bonitasoft.securitycar.SecurityCarAPI.Information;
 import org.bonitasoft.securitycar.SecurityCarAPI.SecurityParameter;
 import org.bonitasoft.securitycar.SecurityCarAPI.SecurityStatus;
 import org.bonitasoft.securitycar.server.Butler;
 import org.bonitasoft.securitycar.server.Butler.RegisterTentative;
 import org.bonitasoft.securitycar.server.Butler.SlotStatistics;
-import org.bonitasoft.securitycar.users.SecurityToolbox;
 import org.bonitasoft.securitycar.users.UsersCustomInfo;
 
 /**
@@ -161,7 +155,7 @@ public class TowerControl {
 
     }
 
-    public static enum ORDERCONNECTEDUSER {
+    public enum ORDERCONNECTEDUSER {
         NAME, CONNECTIONTIME
     }
 
@@ -262,12 +256,10 @@ public class TowerControl {
         for (HttpSession httpSession : butler.mSecurityCarListenerSession.getListSession().values()) {
             APISession apiSession = (APISession) httpSession.getAttribute(SessionUtil.API_SESSION_PARAM_KEY);
             if (apiSession != null && apiSession.getUserId() == userId) {
-                {
-                    // disconnect : just remove the API Session
-                    httpSession.setAttribute(SessionUtil.API_SESSION_PARAM_KEY, null);
-                    listEvents.add(EventUserDisconnected);
-                    return listEvents;
-                }
+                // disconnect : just remove the API Session
+                httpSession.setAttribute(SessionUtil.API_SESSION_PARAM_KEY, null);
+                listEvents.add(EventUserDisconnected);
+                return listEvents;
             }
         }
 
@@ -290,22 +282,28 @@ public class TowerControl {
     /* parameters */
     /*                                                                      */
     /* ******************************************************************** */
-    private static String ParamDaysPasswordActif = "DaysPasswordActif";
-    private static String ParamMaxOfTentatives = "maxOfTentatives";
+    private final static String CSTPROPERTIE_PARAMPASSWORDEXPIREDMECHANISM = "PasswordExpired";
+    private final static String CSTPROPERTIE_PARAMDAYSPASSWORDACTIF = "DaysPasswordActif";
+    private final static String CSTPROPERTIE_PARAMMAXOFTENTATIVE = "maxOfTentatives";
 
+    /**
+     * if 0, then the mechanism is not activated
+     */
+    public boolean paramPasswordExpiredMechanismEnable = false;
     public Integer paramDaysPasswordActif = 0;
-    public Integer paramMaxOfTentatives = 3;
+    public Integer paramMaxOfTentatives = 6;
     /**
      * in order to not reload at each call the param, we kept the last time the load was done, and we reload only after X minutes
      */
     public long paramLastTimeLoad;
 
-    public List<BEvent> init( long tenantId) {
+    public List<BEvent> init(long tenantId) {
         BonitaProperties bonitaProperties = new BonitaProperties(UsersCustomInfo.PROPERTIESNAME, tenantId);
         // init: load parameter and check the database
         bonitaProperties.setCheckDatabase(true);
-        return bonitaProperties.load();        
+        return bonitaProperties.load();
     }
+
     /**
      * loadParameters
      * 
@@ -318,10 +316,13 @@ public class TowerControl {
         bonitaProperties.setCheckDatabase(false);
         listEvents.addAll(bonitaProperties.load());
 
-        String dayPasswordActifSt = bonitaProperties.getProperty(ParamDaysPasswordActif, "0");
+        String passwordExpiredMechanism = bonitaProperties.getProperty(CSTPROPERTIE_PARAMPASSWORDEXPIREDMECHANISM, "0");
+        paramPasswordExpiredMechanismEnable = passwordExpiredMechanism == null ? false : Boolean.valueOf(passwordExpiredMechanism);
+
+        String dayPasswordActifSt = bonitaProperties.getProperty(CSTPROPERTIE_PARAMDAYSPASSWORDACTIF, "0");
         paramDaysPasswordActif = dayPasswordActifSt == null ? 0 : Integer.valueOf(dayPasswordActifSt);
 
-        String maxOfTentativesSt = bonitaProperties.getProperty(ParamMaxOfTentatives, "3");
+        String maxOfTentativesSt = bonitaProperties.getProperty(CSTPROPERTIE_PARAMMAXOFTENTATIVE, "6");
         paramMaxOfTentatives = maxOfTentativesSt == null ? 6 : Integer.valueOf(maxOfTentativesSt);
         paramLastTimeLoad = System.currentTimeMillis();
 
@@ -341,8 +342,9 @@ public class TowerControl {
         securityStatus.listEvents.addAll(bonitaProperties.load());
 
         logger.info(logHeader + ",Save passwordActif[" + securityParameter.paramDaysPasswordActif + "] nbTentatives[" + securityParameter.paramMaxOfTentatives + "]");
-        bonitaProperties.setProperty(ParamDaysPasswordActif, String.valueOf(securityParameter.paramDaysPasswordActif));
-        bonitaProperties.setProperty(ParamMaxOfTentatives, String.valueOf(securityParameter.paramMaxOfTentatives));
+        bonitaProperties.setProperty(CSTPROPERTIE_PARAMPASSWORDEXPIREDMECHANISM, String.valueOf(securityParameter.paramPasswordExpiredMechanismEnable));
+        bonitaProperties.setProperty(CSTPROPERTIE_PARAMDAYSPASSWORDACTIF, String.valueOf(securityParameter.paramDaysPasswordActif));
+        bonitaProperties.setProperty(CSTPROPERTIE_PARAMMAXOFTENTATIVE, String.valueOf(securityParameter.paramMaxOfTentatives));
 
         securityStatus.listEvents.addAll(bonitaProperties.store());
         if (!BEventFactory.isError(securityStatus.listEvents)) {
@@ -382,7 +384,7 @@ public class TowerControl {
                 sob.and();
             }
             sob.leftParenthesis();
-            for (int i = 0; i <  Math.min( CST_NUMBER_USERS_SEARCH_AT_A_TIME,  listUsersConnectedId.size()); i++) {
+            for (int i = 0; i < Math.min(CST_NUMBER_USERS_SEARCH_AT_A_TIME, listUsersConnectedId.size()); i++) {
                 if (i > 0)
                     sob.or();
                 sob.filter(UserSearchDescriptor.ID, listUsersConnectedId.get(fromIndex + i).userId);
@@ -402,8 +404,6 @@ public class TowerControl {
             }
             fromIndex += CST_NUMBER_USERS_SEARCH_AT_A_TIME;
         }
-
-        return;
     }
 
     /**

@@ -19,17 +19,16 @@ import org.bonitasoft.engine.search.SearchOptionsBuilder;
 import org.bonitasoft.engine.search.SearchResult;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
-import org.bonitasoft.securitycar.server.SecurityCarListenerSession;
 
 public class UsersCustomInfo {
-	private static Logger logger = Logger.getLogger(SecurityCarListenerSession.class.getName());
+	private static Logger logger = Logger.getLogger(UsersCustomInfo.class.getName());
 	public String logHeader = "--------------------- SecurityCar.UsersCustomInfo";
 
-	private static BEvent EventCantRegisterTentative = new BEvent(UsersCustomInfo.class.getName(), 1, Level.APPLICATIONERROR, "Can't register the tentative", "The user custom info is not created, the tentative can't be register");
-	private static BEvent EventUserNotExist = new BEvent(UsersCustomInfo.class.getName(), 2, Level.APPLICATIONERROR, "User not found", "A tentative is done on a unknow user (may be an attack)", "Check the number of occurence, you may are under attack", "Check who do the tentative");
-	private static BEvent EventCantCreateUserCustomAttribut = new BEvent(UsersCustomInfo.class.getName(), 3, Level.ERROR, "Can't create User Custom attribut", "The creation of a custom attribut is not possible", "Tentative can't be registered", "Check error");
-	private static BEvent EventCantResetTentative = new BEvent(UsersCustomInfo.class.getName(), 4, Level.ERROR, "Can't reset the number of tentative", "The reset is not possible, user still have the same number of tentative", "User has to connect with the correct password to reset it to zero", "Check exception"); 
-	private static BEvent EventCantSetLastDateChangePassword = new BEvent(UsersCustomInfo.class.getName(), 5, Level.ERROR, "Can't set the change password date", "The set is not possible", "The last date when the password change is not updated", "Check exception"); 
+	private final static BEvent EventCantRegisterTentative = new BEvent(UsersCustomInfo.class.getName(), 1, Level.APPLICATIONERROR, "Can't register the tentative", "The user custom info is not created, the tentative can't be register");
+	private final static BEvent EventUserNotExist = new BEvent(UsersCustomInfo.class.getName(), 2, Level.APPLICATIONERROR, "User not found", "A tentative is done on a unknow user (may be an attack)", "Check the number of occurence, you may are under attack", "Check who do the tentative");
+	private final static BEvent EventCantCreateUserCustomAttribut = new BEvent(UsersCustomInfo.class.getName(), 3, Level.ERROR, "Can't create User Custom attribut", "The creation of a custom attribut is not possible", "Tentative can't be registered", "Check error");
+	private final static BEvent EventCantResetTentative = new BEvent(UsersCustomInfo.class.getName(), 4, Level.ERROR, "Can't reset the number of tentative", "The reset is not possible, user still have the same number of tentative", "User has to connect with the correct password to reset it to zero", "Check exception"); 
+	private final static BEvent EventCantSetLastDateChangePassword = new BEvent(UsersCustomInfo.class.getName(), 5, Level.ERROR, "Can't set the change password date", "The set is not possible", "The last date when the password change is not updated", "Check exception"); 
 	
 	
 	public Long mDefinitionTentative = null;
@@ -47,7 +46,7 @@ public class UsersCustomInfo {
 	 * check and create the custom information if needed
 	 */
 	public List<BEvent> checkUserCustom(IdentityAPI identityAPI) {
-		List<BEvent> listEvents = new ArrayList<BEvent>();
+		List<BEvent> listEvents = new ArrayList<>();
 		if (mDefinitionTentative != null && mDefinitionLastChangePassword != null)
 			return listEvents;
 
@@ -61,12 +60,13 @@ public class UsersCustomInfo {
 
 		if (mDefinitionTentative == null) {
 			CustomUserInfoDefinitionCreator creator = new CustomUserInfoDefinitionCreator(USERTENTATIVE);
-			;
+			
 			CustomUserInfoDefinition infoDefinition;
 			try {
 				infoDefinition = identityAPI.createCustomUserInfoDefinition(creator);
 				mDefinitionTentative = infoDefinition.getId();
 			} catch (AlreadyExistsException e) {
+			    // ignore this error
 			} catch (CreationException e) {
 				listEvents.add(new BEvent(EventCantCreateUserCustomAttribut, e, "Attribute[" + USERTENTATIVE + "]"));
 			}
@@ -74,12 +74,13 @@ public class UsersCustomInfo {
 		}
 		if (mDefinitionLastChangePassword == null) {
 			CustomUserInfoDefinitionCreator creator = new CustomUserInfoDefinitionCreator(USERLASTCHANGEPASSWORD);
-			;
+			
 			CustomUserInfoDefinition infoDefinition;
 			try {
 				infoDefinition = identityAPI.createCustomUserInfoDefinition(creator);
 				mDefinitionLastChangePassword = infoDefinition.getId();
 			} catch (AlreadyExistsException e) {
+			    // ignore this error
 			} catch (CreationException e) {
 				listEvents.add(new BEvent(EventCantCreateUserCustomAttribut, e, "Attribute[" + USERLASTCHANGEPASSWORD + "]"));
 			}
@@ -151,7 +152,6 @@ public class UsersCustomInfo {
 		TentativeStatus tentativeStatus = new TentativeStatus();
 		tentativeStatus.listEvents = checkUserCustom(identityAPI);
 		// search the user
-		User user;
 		BEvent eventInCaseOfError=null;
 		try {
 			tentativeStatus.userId = userId;
@@ -196,8 +196,7 @@ public class UsersCustomInfo {
 		SearchOptionsBuilder searchOptionsBuilder = new SearchOptionsBuilder(startIndex, maxResults);
 		searchOptionsBuilder.filter(CustomUserInfoValueSearchDescriptor.DEFINITION_ID, mDefinitionTentative);
 
-		SearchResult<CustomUserInfoValue> searchResult = identityAPI.searchCustomUserInfoValues(searchOptionsBuilder.done());
-		return searchResult;
+		return identityAPI.searchCustomUserInfoValues(searchOptionsBuilder.done());		
 	}
 	
 	/**
@@ -209,7 +208,7 @@ public class UsersCustomInfo {
 	 */
 	public SearchResult<CustomUserInfoValue> getUsersInformation(List<Long> listUserId, IdentityAPI identityAPI) {
 		
-		if (listUserId.size()==0)
+		if (listUserId.isEmpty())
 			return null;
 		SearchOptionsBuilder searchOptionsBuilder = new SearchOptionsBuilder(0, listUserId.size() * 2);
 		searchOptionsBuilder.leftParenthesis();
@@ -227,7 +226,6 @@ public class UsersCustomInfo {
 		}
 		searchOptionsBuilder.rightParenthesis();
 
-		SearchResult<CustomUserInfoValue> searchResult = identityAPI.searchCustomUserInfoValues(searchOptionsBuilder.done());
-		return searchResult;
+		return identityAPI.searchCustomUserInfoValues(searchOptionsBuilder.done());		
 	}
 }

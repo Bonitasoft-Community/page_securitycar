@@ -36,13 +36,13 @@
 	<center>
 	<table>
 		<tr>
-			<td><h1>Security Car</h1>V1.0 (June 30 2020)</td>
+			<td><h1>Security Car</h1>V1.0.1 (June 30 2020)</td>
 			<td rowspan="2"><img src="img/securitycar.jpg" width="150" heigth="150" /></td>
 			<!--   <td rowspan="2"><img src="pageResource?page=custompage_securitycar&location=img/securitycar.jpg" width="150" heigth="150" /></td>-->
 		</tr>
 		<tr><td>
 			<div id="showHistory" ng-show="ctrl.isshowhistory" style="border-width:2px;border-style:ridge;border-color:blue">
-			1.0 First version<br>				
+			1.0.1 First version<br>				
 			</td>
 		</tr>
 		</div>
@@ -138,7 +138,7 @@
 				<table class="table table-striped table-hover table-condensed">
 						<tr>
 							<th>Date</th>
-							<th>Number of tentatives</th>
+							<th>Number of tentative</th>
 							<th>User attacked</th>
 							<th>Finally correct</th>
 							<th>Client Address</th>
@@ -361,10 +361,12 @@
 			<span class="Loading" ng-show="ctrl.loading"></span>
 			<div ng-bind-html="ctrl.getListEvents(ctrl.custompage.listevents )"></div>
 
-			Password has to be change every : <input type="text" ng-model="ctrl.parameter.nbdayspasswordactif"> days
-			Number of tentative before block: <input type="text" ng-model="ctrl.parameter.nbtentatives">
-			<button class="btn btn-primary btn-xs" ng-click="ctrl.saveParameters()">Update</button><p>
-			
+			<table class="table table-striped table-hover table-condensed">
+				<tr><td>Password Expire : </td><td><input type="checkbox" ng-model="ctrl.parameter.passwordexpiredmechanismenable"  ng-disabled="true"></td></tr>
+				<tr><td>Password has to be change every :</td><td> <input type="text" ng-model="ctrl.parameter.nbdayspasswordactif" ng-disabled="! ctrl.parameter.passwordexpiredmechanismenable"> days</td></tr>
+				<tr><td>Number of tentative before block:</td><td> <input type="text" ng-model="ctrl.parameter.nbtentatives" ng-disabled="true"></td></tr>
+				<tr><td colspan="2" ><center><button class="btn btn-primary btn-xs" ng-click="ctrl.saveParameters()"  ng-disabled="true">Update</button></center></td></tr>
+			</table>
 			<div ng-bind-html="ctrl.getListEvents(ctrl.parameter.listevents )"></div>
 
 		</div>
