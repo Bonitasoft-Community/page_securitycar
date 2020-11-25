@@ -6,7 +6,7 @@
 (function() {
 
 
-var appCommand = angular.module('securitycarmonitor', ['googlechart', 'ui.bootstrap', 'ngSanitize']);
+var appCommand = angular.module('securitycarmonitor', ['googlechart', 'ui.bootstrap', 'ngSanitize',  'ngCookies']);
 
 
 
@@ -21,11 +21,21 @@ var appCommand = angular.module('securitycarmonitor', ['googlechart', 'ui.bootst
 
 // Ping the server
 appCommand.controller('SecurityCarControler',
-	function ( $http, $scope,$sce ) {
+	function ( $http, $scope,$sce, $cookies ) {
 
 	
 	this.showgithublogin=false;
 	
+	this.getHttpConfig = function () {
+		var additionalHeaders = {};
+		var csrfToken = $cookies.get('X-Bonita-API-Token');
+		if (csrfToken) {
+			additionalHeaders ['X-Bonita-API-Token'] = csrfToken;
+		}
+		var config= {"headers": additionalHeaders};
+		console.log("GetHttpConfig : "+angular.toJson( config));
+		return config;
+	}
 	// --------------------------------------------------------------------------
 	//
 	//  General
@@ -101,7 +111,7 @@ appCommand.controller('SecurityCarControler',
 
 		var json = encodeURI(angular.toJson(this.params, true));
 		
-		$http.get( '?page=custompage_securitycar&action='+action+'&paramjson='+json+'&t='+Date.now())
+		$http.get( '?page=custompage_securitycar&action='+action+'&paramjson='+json+'&t='+Date.now(),  this.getHttpConfig())
 			.success(function(jsonResult, statusHttp, headers, config) {
 				
 				// connection is lost ?
@@ -155,7 +165,7 @@ appCommand.controller('SecurityCarControler',
 		self.inprogress=true;
 		var json = encodeURI(angular.toJson(this.params, true));
 
-		$http.get( '?page=custompage_securitycar&action=usersoperation&paramjson='+json+'&t='+Date.now())
+		$http.get( '?page=custompage_securitycar&action=usersoperation&paramjson='+json+'&t='+Date.now(),  this.getHttpConfig())
 			.success(function(jsonResult, statusHttp, headers, config) {
 				
 				// connection is lost ?
@@ -195,7 +205,7 @@ appCommand.controller('SecurityCarControler',
 						'connectedStartIndex': this.params.connectedStartIndex, 'connectedMaxResults':this.params.connectedMaxResults,
 					'useroperationFilteruser':this.params.useroperationFilteruser, 'useroperationStartIndex':this.params.useroperationFilteruser, 'useroperationMaxResults':this.params.useroperationFilteruser};
 			var json = encodeURI(angular.toJson(param, true));
-			$http.get( '?page=custompage_securitycar&action='+action+'&paramjson='+json+'&t='+Date.now())
+			$http.get( '?page=custompage_securitycar&action='+action+'&paramjson='+json+'&t='+Date.now(),  this.getHttpConfig())
 				.success(function(jsonResult, statusHttp, headers, config) {
 					
 					// connection is lost ?
@@ -223,7 +233,7 @@ appCommand.controller('SecurityCarControler',
 						'connectedStartIndex': this.params.connectedStartIndex, 'connectedMaxResults':this.params.connectedMaxResults,
 					'useroperationFilteruser':this.params.useroperationFilteruser, 'useroperationStartIndex':this.params.useroperationFilteruser, 'useroperationMaxResults':this.params.useroperationFilteruser};
 			var json = encodeURI(angular.toJson(param, true));
-			$http.get( '?page=custompage_securitycar&action=disconnect&paramjson='+json+'&t='+Date.now())
+			$http.get( '?page=custompage_securitycar&action=disconnect&paramjson='+json+'&t='+Date.now(),  this.getHttpConfig())
 				.success(function(jsonResult, statusHttp, headers, config) {
 					
 					// connection is lost ?
@@ -248,7 +258,7 @@ appCommand.controller('SecurityCarControler',
 					'connectedStartIndex': this.params.connectedStartIndex, 'connectedMaxResults':this.params.connectedMaxResults,
 					'useroperationFilteruser':this.params.useroperationFilteruser, 'useroperationStartIndex':this.params.useroperationFilteruser, 'useroperationMaxResults':this.params.useroperationFilteruser};
 		var json = encodeURI(angular.toJson(param, true));
-		$http.get( '?page=custompage_securitycar&action=resettentative&paramjson='+json+'&t='+Date.now())
+		$http.get( '?page=custompage_securitycar&action=resettentative&paramjson='+json+'&t='+Date.now(),  this.getHttpConfig())
 			.success(function(jsonResult, statusHttp, headers, config) {
 				
 				// connection is lost ?
@@ -271,7 +281,7 @@ appCommand.controller('SecurityCarControler',
 					'connectedStartIndex': this.params.connectedStartIndex, 'connectedMaxResults':this.params.connectedMaxResults,
 					'useroperationFilteruser':this.params.useroperationFilteruser, 'useroperationStartIndex':this.params.useroperationFilteruser, 'useroperationMaxResults':this.params.useroperationFilteruser};
 		var json = encodeURI(angular.toJson(param, true));
-		$http.get( '?page=custompage_securitycar&action=resetpassword&paramjson='+json+'&t='+Date.now())
+		$http.get( '?page=custompage_securitycar&action=resetpassword&paramjson='+json+'&t='+Date.now(),  this.getHttpConfig())
 			.success(function(jsonResult, statusHttp, headers, config) {
 				
 				// connection is lost ?
@@ -296,7 +306,7 @@ appCommand.controller('SecurityCarControler',
 	{
 		var self = this;
 		self.saveinprogress=true;
-		$http.get( '?page=custompage_securitycar&action=loadparameters&t='+Date.now() )
+		$http.get( '?page=custompage_securitycar&action=loadparameters&t='+Date.now(),  this.getHttpConfig() )
 			.success(function(jsonResult, statusHttp, headers, config) {
 				
 				// connection is lost ?
@@ -330,7 +340,7 @@ appCommand.controller('SecurityCarControler',
 		
 		var json = encodeURI(angular.toJson(self.parameter, false));
 		
-		$http.get( '?page=custompage_securitycar&action=saveParameters&paramjson='+json+'&t='+Date.now() )
+		$http.get( '?page=custompage_securitycar&action=saveParameters&paramjson='+json+'&t='+Date.now(),  this.getHttpConfig() )
 			.success(function(jsonResult, statusHttp, headers, config) {
 				
 				// connection is lost ?
